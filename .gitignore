@@ -1,0 +1,25 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# KiCad
+*.kicad_prl
+*-backups/
+fp-info-cache
+_autosave-*
+
+# Build Artefakte
+firmware/zmk/app/build/
+*.hex
+*.uf2
+*.bin
+
+# Editor
+.vscode/
+.idea/
+
+# Temporäre Dateien
+*.tmp
+*.bak
+*~
