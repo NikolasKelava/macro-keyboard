@@ -4,7 +4,7 @@
 .LSOverride
 
 # ZMK Toolchain
-firmware/zmk-toolchain/
+/firmware/zmk_toolchain/
 
 # Build-Artefakte
 firmware/build/*.uf2
@@ -22,4 +22,3 @@ firmware/build/*.hex
 *-backups/
 fp-info-cache
 _autosave-*
-/firmware/zmk_toolchain
