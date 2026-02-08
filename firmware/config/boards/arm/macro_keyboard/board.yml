@@ -1,0 +1,7 @@
+board:
+  name: macro_keyboard
+  vendor: macro
+  socs:
+    - name: nrf52840
+      variants:
+        - name: qiaa

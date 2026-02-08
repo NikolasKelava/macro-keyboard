@@ -3,23 +3,23 @@
 .AppleDouble
 .LSOverride
 
+# ZMK Toolchain
+firmware/zmk-toolchain/
+
+# Build-Artefakte
+firmware/build/*.uf2
+firmware/build/*.hex
+!firmware/build/.gitkeep
+
+# Editor
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+.cursor/
+
 # KiCad
 *.kicad_prl
 *-backups/
 fp-info-cache
 _autosave-*
-
-# Build Artefakte
-firmware/zmk/app/build/
-*.hex
-*.uf2
-*.bin
-
-# Editor
-.vscode/
-.idea/
-
-# Temporäre Dateien
-*.tmp
-*.bak
-*~
+/firmware/zmk_toolchain
