@@ -6,6 +6,8 @@
 # ZMK Toolchain
 /firmware/zmk_toolchain/
 
+/development
+
 # Build-Artefakte
 firmware/build/*.uf2
 firmware/build/*.hex
