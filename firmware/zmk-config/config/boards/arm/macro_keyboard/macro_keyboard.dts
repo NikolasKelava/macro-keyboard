@@ -14,12 +14,30 @@
         zephyr,code-partition = &code_partition;
         zephyr,sram = &sram0;
         zephyr,flash = &flash0;
+        zephyr,display = &oled;
         zmk,battery = &vbatt;
         zmk,kscan = &kscan0;
     };
 
     kscan0: kscan {
+        compatible = "zmk,kscan-composite";
+        wakeup-source;
+        rows = <4>;
+        columns = <4>;
+
+        matrix {
+            kscan = <&kscan_matrix>;
+        };
+
+        profile_button {
+            kscan = <&kscan_profile_direct>;
+            row-offset = <3>;
+        };
+    };
+
+    kscan_matrix: kscan_matrix {
         compatible = "zmk,kscan-gpio-matrix";
+        wakeup-source;
         diode-direction = "col2row";
         row-gpios
             = <&gpio0 20 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
@@ -34,9 +52,21 @@
             ;
     };
 
+    kscan_profile_direct: kscan_profile_direct {
+        compatible = "zmk,kscan-gpio-direct";
+        wakeup-source;
+        input-keys = <&profile_button>;
+    };
+
+    sensors {
+        compatible = "zmk,keymap-sensors";
+        sensors = <&as5600>;
+        triggers-per-rotation = <20>;
+    };
+
     vbatt: vbatt {
         compatible = "zmk,battery-voltage-divider";
-        io-channels = <&adc 1>; //I might need to change this to 4 bc the adc is on P0.04 and i am not sure if this pin is equal to 1
+        io-channels = <&adc 2>;
         output-ohms = <1000000>;
         full-ohms = <(1000000 + 1000000)>;
     };
@@ -102,7 +132,13 @@
         com-sequential;
         inversion-on;
         prechargep = <0x22>;
-        status = "disabled";
+        status = "okay";
+    };
+
+    as5600: as5600@36 {
+        compatible = "ams,as5600";
+        reg = <0x36>;
+        status = "okay";
     };
 };
 
