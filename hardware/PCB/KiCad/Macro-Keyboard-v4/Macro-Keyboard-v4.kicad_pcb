@@ -15679,7 +15679,7 @@
 		(path "/8ad641e3-9d47-4fd3-b0c8-cbf5a975acbd")
 		(sheetname "/")
 		(sheetfile "Macro-Keyboard-v4.kicad_sch")
-		(attr through_hole exclude_from_pos_files exclude_from_bom)
+		(attr through_hole exclude_from_pos_files)
 		(pad "1" thru_hole circle
 			(at 0 0 270)
 			(size 2.5 2.5)
@@ -17592,7 +17592,7 @@
 		(path "/e25383b0-5c5c-462b-92fc-27bb5cf50dc5")
 		(sheetname "/")
 		(sheetfile "Macro-Keyboard-v4.kicad_sch")
-		(attr through_hole exclude_from_pos_files exclude_from_bom)
+		(attr through_hole exclude_from_pos_files)
 		(pad "1" thru_hole circle
 			(at 0 0 270)
 			(size 2.5 2.5)
@@ -19086,7 +19086,7 @@
 		(property "Reference" "J5"
 			(at -2.1 3.55 180)
 			(layer "B.SilkS")
-			(uuid "853b2318-e62e-4044-a7c6-73184a9442f3")
+			(uuid "3faa43e1-f01b-49d5-9f29-cefd78db63e2")
 			(effects
 				(font
 					(size 1 1)
@@ -19098,7 +19098,7 @@
 		(property "Value" "JST_03"
 			(at 2.5 -4.6 180)
 			(layer "B.Fab")
-			(uuid "6195115b-efa5-48f9-bc37-ec81a8dcb7ee")
+			(uuid "f6563f20-6540-4e31-9834-8dcab8b4b8b1")
 			(effects
 				(font
 					(size 1 1)
@@ -19111,7 +19111,7 @@
 			(at 0 0 180)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "707b4dbb-f3e7-4c12-bea5-fae5392ca229")
+			(uuid "44b1ae33-4faa-4d8f-a9a4-74016900e7d8")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -19124,7 +19124,7 @@
 			(at 0 0 180)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "0376e4fa-604e-4f4d-b9ad-5bc21757d47f")
+			(uuid "f3240303-e875-460f-b6fd-0fdcfba7243d")
 			(effects
 				(font
 					(size 1.27 1.27)
