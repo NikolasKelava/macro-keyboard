@@ -71,7 +71,7 @@ ZMK Studio build (enable Studio per latest docs; include snippet if required by 
     -DCONFIG_ZMK_STUDIO=y
 
 [IMPLEMENTATION STRATEGY]
-Milestone 1 (make it build reliably):
+Milestone 1 (make it build reliably):  [DONE — dev + studio builds clean]
   - Board recognized by Zephyr/ZMK (board.yml, Kconfig.*, DTS, defconfig)
   - Matrix scanning works and keymap matches 3x4
   - Profile button wired as input (even if logic is initially stubbed)
@@ -82,3 +82,36 @@ Milestone 3 (behavior):
   - Profiles drive layer/behavior selection
   - Encoder/AS5600 integrated as supported by available ZMK/Zephyr drivers or via a custom module if needed
   - Display reflects battery + active profile
+
+[TOOLCHAIN]
+Native Zephyr/ZMK install on M1 Mac (followed the ZMK "Getting Started" native setup guide).
+Toolchain at: /firmware/zmk_toolchain/{app,modules,zephyr}
+
+[MILESTONE 1 — CURRENT STATE]
+Board vendor/name: nikolas / macro_keyboard  (HWMv2, SoC nrf52840)
+Files under zmk-config/config/boards/arm/macro_keyboard/:
+  board.yml, board.cmake, pre_dt_board.cmake,
+  Kconfig.macro_keyboard, Kconfig.defconfig,
+  macro_keyboard.yaml, macro_keyboard_defconfig,
+  macro_keyboard.dts
+Keymap + config (user-side, picked up via ZMK_CONFIG):
+  zmk-config/config/macro_keyboard.keymap  (single 3x4 default_layer, &studio_unlock on key 8)
+  zmk-config/config/macro_keyboard.conf    (CONFIG_ZMK_BLE/USB/STUDIO/SLEEP)
+DTS wiring (matches [PINMAP]):
+  kscan0      : zmk,kscan-gpio-matrix, col2row, rows P0.20/21/19, cols P0.16/14/15/13
+  matrix xform: matrix_transform0 (3r x 4c, row-major)
+  phys layout : physical_layout0 (12 keys, Studio-ready) — chosen zmk,physical-layout
+  i2c0        : P0.24 SDA / P0.25 SCL, fast mode; oled@0x3c node present but status="disabled"
+  adc         : enabled; vbatt on AIN2 (P0.04) via zmk,battery-voltage-divider (divider values are placeholders)
+  profile_btn : gpio-keys on P1.02, active-low + pull-up (input only, no behavior bound yet)
+Flash partition layout (direct SWD, no bootloader):
+  code_partition    @ 0x000000, size 0xF0000  (code links from 0x0)
+  storage_partition @ 0x0F0000, size 0x10000  (NVS settings)
+  WARNING: Do NOT add CONFIG_USE_DT_CODE_PARTITION=y — that links from 0x26000
+  (UF2-bootloader offset) and the board will hang on reset with no valid vector table.
+
+[FLASHING — pyocd / DAPLink]
+Runner is configured in board.cmake (pyocd, --target=nrf52840).
+From /firmware/zmk_toolchain/app, after a successful build:
+  west flash -d build/macro_keyboard/studio -r pyocd
+Artifact for manual flashing: build/macro_keyboard/studio/zephyr/zmk.hex

@@ -1,0 +1,16 @@
+identifier: macro_keyboard
+name: macro_keyboard
+type: mcu
+arch: arm
+toolchain:
+  - zephyr
+  - gnuarmemb
+  - xtools
+supported:
+  - adc
+  - gpio
+  - i2c
+  - kscan
+  - usb_device
+  - ble
+  - watchdog

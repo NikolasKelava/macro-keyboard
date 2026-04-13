@@ -1,0 +1,5 @@
+board:
+  name: macro_keyboard
+  vendor: nikolas
+  socs:
+    - name: nrf52840

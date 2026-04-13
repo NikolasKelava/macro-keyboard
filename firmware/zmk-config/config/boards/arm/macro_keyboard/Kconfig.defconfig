@@ -1,0 +1,25 @@
+# Copyright (c) 2026 The ZMK Contributors
+# SPDX-License-Identifier: MIT
+
+if BOARD_MACRO_KEYBOARD
+
+config BOARD
+    default "macro_keyboard"
+
+config ZMK_KEYBOARD_NAME
+    default "macro_keyboard"
+
+config BT_CTLR
+    default BT
+
+if USB
+
+config USB_NRFX
+    default y
+
+config USB_DEVICE_STACK
+    default y
+
+endif # USB
+
+endif # BOARD_MACRO_KEYBOARD
