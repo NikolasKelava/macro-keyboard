@@ -24,3 +24,6 @@ firmware/build/*.hex
 *-backups/
 fp-info-cache
 _autosave-*
+
+#Blender
+/hardware/CASE/blender

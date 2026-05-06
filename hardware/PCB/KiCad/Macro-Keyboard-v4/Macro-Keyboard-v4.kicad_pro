@@ -515,7 +515,7 @@
       "plot": "",
       "pos_files": "",
       "specctra_dsn": "",
-      "step": "Macro-Keyboard-v4.step",
+      "step": "../../../CASE/blender/Macro-Keyboard-v4-pcb.stl",
       "svg": "",
       "vrml": ""
     },
