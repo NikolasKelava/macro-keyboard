@@ -21,6 +21,7 @@
         zmk,kscan = &kscan0;
         zmk,physical-layout = &physical_layout0;
         zmk,battery = &vbatt;
+        zephyr,display = &oled;
     };
 
     kscan0: kscan {
@@ -86,8 +87,8 @@
     vbatt: vbatt {
         compatible = "zmk,battery-voltage-divider";
         io-channels = <&adc 2>; /* AIN2 = P0.04 */
-        output-ohms = <2000000>;
-        full-ohms = <(2000000 + 820000)>;
+        output-ohms = <1000000>;
+        full-ohms = <(1000000 + 330000)>;
     };
 };
 
@@ -137,7 +138,7 @@
     clock-frequency = <I2C_BITRATE_FAST>;
 
     oled: ssd1306@3c {
-        status = "disabled";
+        status = "okay";
         compatible = "solomon,ssd1306fb";
         reg = <0x3c>;
         width = <128>;

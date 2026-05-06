@@ -75,13 +75,42 @@ Milestone 1 (make it build reliably):  [DONE — dev + studio builds clean]
   - Board recognized by Zephyr/ZMK (board.yml, Kconfig.*, DTS, defconfig)
   - Matrix scanning works and keymap matches 3x4
   - Profile button wired as input (even if logic is initially stubbed)
-Milestone 2 (UI + sensors):
-  - I2C enabled in DTS; OLED node added (can be disabled if driver/bindings block the build)
-  - Battery ADC channel available
-Milestone 3 (behavior):
-  - Profiles drive layer/behavior selection
-  - Encoder/AS5600 integrated as supported by available ZMK/Zephyr drivers or via a custom module if needed
-  - Display reflects battery + active profile
+Milestone 2 (UI + sensors):  [DONE — display + battery build clean, dev + studio variants]
+  - I2C0 enabled (P0.24 SDA / P0.25 SCL), OLED ssd1306@0x3c node status="okay"
+  - chosen { zephyr,display = &oled; }; CONFIG_ZMK_DISPLAY=y enables LVGL + display widgets
+  - Battery: CONFIG_ZMK_BATTERY_REPORTING=y; vbatt divider 1M / (1M+330k) on AIN2 (P0.04)
+  - BLE + ZMK Studio still build clean with display infra added; on-device visuals deferred to M3
+
+Milestone 3 (behavior — fulfills FUNCTIONAL REQUIREMENTS):
+  Profiles (FR §2):
+    - 4 layers in keymap, one per profile; each layer owns its own 12 key bindings + encoder bindings
+    - Profile button (P1.02) cycles active layer 1→2→3→4→1 (must override the gpio-keys-only
+      wiring from M1 — needs to drive a ZMK behavior, e.g. via additional kscan-gpio or a small
+      custom behavior listening to the gpio-keys input event)
+    - Active profile state must be observable so the display widget can render it
+  Encoder / AS5600 (FR §2 + §3):
+    - AS5600 magnetic angle sensor on I2C0 @ 0x36 (shared bus with OLED)
+    - No upstream ZMK driver exists — implement as a Zephyr sensor driver (or ZMK module)
+      that converts angle deltas into discrete tick events and feeds them to a ZMK
+      sensor/behavior binding (mimicking &sensor_rotate_*)
+    - Per-profile encoder behavior: volume up/down, vertical scroll, horizontal scroll, etc.
+      bound per layer in the keymap
+  Display (FR §3):
+    - Custom ZMK display screen (LVGL) showing:
+        * battery indicator (percentage/level from zmk,battery)
+        * profile slots 1–4 with the active slot visually marked
+    - Refresh on profile-change event and on periodic battery updates (event-driven preferred
+      to keep idle current low; CONFIG_ZMK_DISPLAY_BLANK_ON_IDLE etc. per latest ZMK docs)
+  Power (FR §5):
+    - Verify CONFIG_ZMK_SLEEP behavior with display + I2C peripherals (display should blank
+      and I2C peripherals should drop to low-power pinctrl on idle)
+  ZMK Studio (FR §4):
+    - All 4 layers + per-layer encoder bindings must remain editable through ZMK Studio
+      (keep `&studio_unlock` reachable on at least one layer)
+  Verification:
+    - Flash to hardware, confirm: BLE pairing, OLED renders battery + 4 profile slots,
+      profile button cycles and display updates, encoder produces the expected HID
+      output for each profile, ZMK Studio still connects and edits keymap.
 
 [TOOLCHAIN]
 Native Zephyr/ZMK install on M1 Mac (followed the ZMK "Getting Started" native setup guide).
