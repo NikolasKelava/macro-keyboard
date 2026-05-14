@@ -12,16 +12,22 @@ CONFIG_GPIO=y
 CONFIG_ADC=y
 
 # Enable writing to flash
-# Note: CONFIG_USE_DT_CODE_PARTITION is intentionally NOT set.
-# Firmware is flashed directly via SWD (pyocd/DAPLink) — code must link from 0x0.
-# Using USE_DT_CODE_PARTITION would link from 0x26000 (UF2-bootloader offset) and
-# the chip would hang on reset with no valid vector table at 0x0.
 CONFIG_MPU_ALLOW_FLASH_WRITE=y
 CONFIG_NVS=y
 CONFIG_SETTINGS_NVS=y
 CONFIG_FLASH=y
 CONFIG_FLASH_PAGE_LAYOUT=y
 CONFIG_FLASH_MAP=y
+
+# UF2 bootloader (Adafruit nRF52, installed once via SWD).
+# - USE_DT_CODE_PARTITION links the application at the code_partition offset
+#   (0x26000) defined in macro_keyboard.dts, leaving 0x0..0x25FFF for the
+#   bootloader's MBR + headers.
+# - BUILD_OUTPUT_UF2 produces zmk.uf2 in the build dir for drag-drop flashing.
+# - The family ID is the Adafruit-assigned ID for nRF52840.
+CONFIG_USE_DT_CODE_PARTITION=y
+CONFIG_BUILD_OUTPUT_UF2=y
+CONFIG_BUILD_OUTPUT_UF2_FAMILY_ID="0xADA52840"
 
 # 32kHz crystal
 CONFIG_CLOCK_CONTROL_NRF_K32SRC_XTAL=y

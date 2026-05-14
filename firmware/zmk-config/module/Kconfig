@@ -1,0 +1,4 @@
+# macro_keyboard custom firmware module Kconfig.
+#
+# No project-specific options yet — the custom status screen is selected via
+# the upstream ZMK_DISPLAY_STATUS_SCREEN_CUSTOM choice.

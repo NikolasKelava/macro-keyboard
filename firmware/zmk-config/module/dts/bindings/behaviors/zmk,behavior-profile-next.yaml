@@ -1,0 +1,9 @@
+description: |
+  Profile-next behavior. On press, advances the active profile layer by one
+  (modulo PROFILE_COUNT). Same binding can be placed on every layer — the
+  cycle is computed from the current highest-active layer, so it doesn't
+  depend on which layer's binding actually fires.
+
+compatible: "zmk,behavior-profile-next"
+
+include: zero_param.yaml

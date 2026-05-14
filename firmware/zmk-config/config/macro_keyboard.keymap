@@ -1,6 +1,20 @@
 /*
  * Copyright (c) 2026 The ZMK Contributors
  * SPDX-License-Identifier: MIT
+ *
+ * macro_keyboard keymap
+ *
+ *   Physical layout: 3 rows x 4 cols + 1 profile button (13 keys total).
+ *   Each layer represents one profile (1..4). The profile button is the
+ *   13th key on every layer and is bound to `&profile_next`, a custom
+ *   behavior that always advances to the next profile based on the
+ *   current highest-active layer (1 -> 2 -> 3 -> 4 -> 1).
+ *
+ *   `&profile_next` is implemented in zmk-config/module/src/behavior_profile_next.c
+ *   and declared as a DT node below.
+ *
+ *   Defaults are placeholders; everything is editable via ZMK Studio.
+ *   `&studio_unlock` is reachable on layer 0 (profile 1), key index 8.
  */
 
 #include <behaviors.dtsi>
@@ -8,15 +22,67 @@
 #include <dt-bindings/zmk/bt.h>
 
 / {
+    behaviors {
+        profile_next: profile_next {
+            compatible = "zmk,behavior-profile-next";
+            #binding-cells = <0>;
+        };
+    };
+
     keymap {
         compatible = "zmk,keymap";
 
-        default_layer {
-            display-name = "Base";
+        /* Profile 1 — Media */
+        media_layer {
+            display-name = "Media";
             bindings = <
-                &kp N1          &kp N2  &kp N3  &kp N4
-                &kp N5          &kp N6  &kp N7  &kp N8
-                &studio_unlock  &kp N0  &bt BT_CLR &bt BT_NXT
+                &kp C_PREV       &kp C_PLAY_PAUSE  &kp C_NEXT       &kp C_MUTE
+                &kp C_VOL_DN     &kp C_VOL_UP      &kp C_BRI_DN     &kp C_BRI_UP
+                &studio_unlock   &kp C_STOP        &kp C_RW         &kp C_FF
+                &profile_next
+            >;
+        };
+
+        /*
+         * Profile 2 — Productivity (macOS shortcuts).
+         * macOS app shortcuts use Cmd (LG), not Ctrl (LC). Redo on macOS is
+         * Cmd+Shift+Z, not Cmd+Y. Edit in Studio for non-Mac hosts.
+         */
+        productivity_layer {
+            display-name = "Productivity";
+            bindings = <
+                &kp LG(Z)        &kp LG(LS(Z))     &kp LG(S)        &kp LG(F)
+                &kp LG(X)        &kp LG(C)         &kp LG(V)        &kp LG(A)
+                &kp HOME         &kp END           &kp PG_UP        &kp PG_DN
+                &profile_next
+            >;
+        };
+
+        /*
+         * Profile 3 — Browser / Tabs (macOS shortcuts).
+         *   Cmd+T new tab, Cmd+W close tab, Cmd+Shift+T reopen, Cmd+R reload.
+         *   Ctrl+Tab still cycles tabs in browsers on macOS.
+         *   Cmd+[ / Cmd+] for back / forward.
+         *   Cmd+1..3, Cmd+9 jump to specific tab.
+         */
+        browser_layer {
+            display-name = "Browser";
+            bindings = <
+                &kp LG(T)        &kp LG(W)         &kp LG(LS(T))    &kp LG(R)
+                &kp LC(TAB)      &kp LC(LS(TAB))   &kp LG(LBKT)     &kp LG(RBKT)
+                &kp LG(N1)       &kp LG(N2)        &kp LG(N3)       &kp LG(N9)
+                &profile_next
+            >;
+        };
+
+        /* Profile 4 — Bluetooth / System */
+        bt_layer {
+            display-name = "BT";
+            bindings = <
+                &bt BT_SEL 0     &bt BT_SEL 1      &bt BT_SEL 2     &bt BT_SEL 3
+                &bt BT_CLR       &bt BT_NXT        &bt BT_PRV       &bt BT_DISC 0
+                &kp C_VOL_DN     &kp C_VOL_UP      &kp C_MUTE       &kp C_PLAY_PAUSE
+                &profile_next
             >;
         };
     };

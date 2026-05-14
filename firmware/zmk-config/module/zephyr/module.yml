@@ -1,0 +1,6 @@
+name: macro_keyboard_module
+build:
+  cmake: .
+  kconfig: Kconfig
+  settings:
+    dts_root: .
