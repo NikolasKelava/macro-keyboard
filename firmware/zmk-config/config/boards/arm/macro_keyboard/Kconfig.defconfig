@@ -22,4 +22,52 @@ config USB_DEVICE_STACK
 
 endif # USB
 
+# Match the panel's pixel format and isolate display rendering from BLE/USB.
+# Same pattern used by ZMK's 128x64 SSD1306 shields (waterfowl, zodiark, kyria).
+if ZMK_DISPLAY
+
+# Display work runs on its own thread instead of the system work queue. Without
+# this, any stall inside an LVGL flush — over a shared I2C bus, this happens —
+# blocks the system work queue, and ZMK's BLE advertising + USB-HID TX run on
+# that same queue, so the device fails to enumerate.
+choice ZMK_DISPLAY_WORK_QUEUE
+    default ZMK_DISPLAY_WORK_QUEUE_DEDICATED
+endchoice
+
+endif # ZMK_DISPLAY
+
+if LVGL
+
+# Match the SSD1306 monochrome panel. Default (RGB565 / 32bpp) produces noise
+# on a 1bpp display and is far too large for our LV mem pool.
+config LV_Z_BITS_PER_PIXEL
+    default 1
+
+choice LV_COLOR_DEPTH
+    default LV_COLOR_DEPTH_1
+endchoice
+
+# Larger draw buffer = fewer partial-render flushes per frame and fewer I2C
+# transactions per frame. 10% (the Zephyr default) trickles flushes faster
+# than the I2C bus can serve them, starving the display work queue.
+config LV_Z_VDB_SIZE
+    default 64
+
+# The BUILT_IN ZMK status screen implies these. The CUSTOM screen does not,
+# but without them: theme_mono never initialises, no default font is set on
+# the display, lv_label_create renders with a NULL font and faults — which
+# brings BLE/USB down with it. Pin here so any screen choice (BUILT_IN or
+# CUSTOM) gets a usable theme + font.
+config LV_USE_THEME_MONO
+    default y
+
+config LV_FONT_MONTSERRAT_16
+    default y
+
+choice LV_FONT_DEFAULT
+    default LV_FONT_DEFAULT_MONTSERRAT_16
+endchoice
+
+endif # LVGL
+
 endif # BOARD_MACRO_KEYBOARD

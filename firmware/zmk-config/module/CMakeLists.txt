@@ -18,5 +18,5 @@ zephyr_library_include_directories(${ZEPHYR_BASE}/../app/include)
 # M3 — Profiles + profile-button cycle.
 zephyr_library_sources(src/behavior_profile_next.c)
 
-# M4 — Custom display status screen (added when display work resumes).
-# zephyr_library_sources_ifdef(CONFIG_ZMK_DISPLAY_STATUS_SCREEN_CUSTOM src/status_screen.c)
+# M4 — Custom display status screen.
+zephyr_library_sources_ifdef(CONFIG_ZMK_DISPLAY_STATUS_SCREEN_CUSTOM src/status_screen.c)
