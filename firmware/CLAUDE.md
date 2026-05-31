@@ -182,23 +182,35 @@ Milestone 4 — Display.   [DONE]
 
   Layout (logical 64w x 128h portrait — the panel is physically 128x64
   landscape and we rotate via a custom flush callback, see "Rotation"):
-    - top-right of the rotated canvas: battery row "<charge> <icon> NN%"
-      in Montserrat 12 (smaller font keeps the line ~14 px tall so it
-      doesn't crowd the cell stack). Uses LV_SYMBOL_CHARGE when
-      zmk_usb_is_powered() and a LV_SYMBOL_BATTERY_* glyph picked by
-      level. Subscribes to zmk_battery_state_changed +
-      zmk_usb_conn_state_changed so the icon updates in real time when
-      the cable is connected/disconnected and whenever the battery driver
-      pushes a new state-of-charge.
-    - centred column below: four 44x22 cells stacked vertically (4 px
-      gap, first cell top at y=24, last cell bottom at y=124). Each cell
-      is an lv_obj container; default style is a 1 px rounded outline
-      with transparent fill, active style (LV_STATE_CHECKED) is a solid
-      fill with an inverted text_color the child digit label inherits.
-      profile_update toggles LV_STATE_CHECKED — LVGL repaints from the
-      right state automatically. Cells need to be containers (not bare
-      labels with bg styles) because in LVGL v9 lv_label doesn't draw
-      its own background reliably.
+    - battery row, centred horizontally at the top of the rotated canvas:
+      a custom battery icon ("[==] NN%"). Drawn crisp for the 1bpp panel —
+      LVGL renders the 4bpp anti-aliased Montserrat font (and the
+      FontAwesome LV_SYMBOL battery/charge glyphs baked into it) by
+      thresholding luminance at 127 onto I1, which makes them bulky/fuzzy
+      with stray edge pixels. So the row uses NO fonts/symbols for the
+      icon: the percentage is lv_font_unscii_8 (true 1bpp, 8 px, no AA)
+      and the battery is full-opacity axis-aligned rectangles (body
+      outline + nub + level-proportional fill). While charging the interior
+      is filled solid and a 7x9 lightning bolt (hand-drawn 1bpp lv_canvas,
+      OFF/dark pixels on the lit fill, spanning the full interior height)
+      is overlaid as a cut-out.
+      battery_update re-centres the whole row each update. NOT a polarity
+      bug — polarity is correct (else the whole screen would invert).
+      Requires LV_FONT_UNSCII_8=y and LV_USE_CANVAS=y (pinned in board
+      Kconfig.defconfig). Subscribes to zmk_battery_state_changed +
+      zmk_usb_conn_state_changed for live cable/SoC updates.
+    - centred column below: four 52x22 cells (radius 8) stacked vertically
+      (6 px gap, first cell top at y=16, last cell bottom at y=122). The
+      6 px left/right margin and 6 px bottom margin to the screen edge are
+      equal by design. Each cell is an lv_obj container; default style is a
+      rounded outline with transparent fill, active style (LV_STATE_CHECKED)
+      is a solid fill with an inverted text_color the child digit label
+      inherits. The digit uses lv_font_unscii_16 (1bpp) so the active
+      (inverted) digit's stems stay pixel-identical to the inactive ones —
+      a 4bpp font thresholds asymmetrically on inversion and the selected
+      digit renders ~1 px thinner. profile_update toggles LV_STATE_CHECKED.
+      Cells need to be containers (not bare labels with bg styles) because
+      in LVGL v9 lv_label doesn't draw its own background reliably.
     - "active profile" is derived from zmk_keymap_highest_layer_active(),
       same source the profile_next behavior advances. Layers 0..3 map 1:1
       to profiles 1..4; indices outside that range fall back to slot 0.
@@ -247,15 +259,15 @@ Milestone 4 — Display.   [DONE]
        renders with NULL font → hardfault → BLE/USB die too.
     5. LV_FONT_MONTSERRAT_16 + LV_FONT_DEFAULT_MONTSERRAT_16 — same story:
        BUILT_IN sets them inside its `if` block; CUSTOM doesn't.
-    6. LV_Z_MEM_POOL_SIZE=8192 — ZMK's app/src/display/Kconfig sets this
+    6. LV_Z_MEM_POOL_SIZE=12288 — ZMK's app/src/display/Kconfig sets this
        default to 4096 only when STATUS_SCREEN_BUILT_IN is selected. With
        CUSTOM it falls back to Zephyr's 2048-byte default — not enough for
        even theme_mono + screen + one label, so lv_obj_create silently
        returns NULL and the next deref hardfaults, taking BLE/USB down.
-       4096 was enough for the minimal one-label diagnostic screen but
-       the real screen (5 lv_obj + 2 styles with multiple bg/border/text
-       props) exhausts it too; we pin 8192 in board Kconfig.defconfig to
-       have measured headroom. (~4 KB extra RAM, well within budget.)
+       8192 covered the original M4 layout; the crisp battery-icon rework
+       added the body/nub/fill objects + the charge-bolt canvas, so we
+       pin 12288 in board Kconfig.defconfig with measured headroom.
+       (~4 KB extra RAM, well within budget.)
 
 Milestone 5 — AS5600 magnetic encoder.   [PENDING]
   - I2C0 @ 0x36, shared with the OLED. No upstream ZMK driver exists.

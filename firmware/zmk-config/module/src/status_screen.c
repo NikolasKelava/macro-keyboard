@@ -6,7 +6,7 @@
  * in 90° (portrait) orientation: 64 px wide x 128 px tall.
  *
  *   +-------------+   <- top of the device once rotated to the right
- *   | [icn] NN%   |   battery row (Montserrat 12)
+ *   |  [==] NN%   |   battery row, centred (custom icon + UNSCII 8)
  *   |             |
  *   |   +-----+   |
  *   |   |  1  |   |   active profile = filled cell + inverted digit
@@ -34,6 +34,20 @@
  * to OFF and `lv_color_black()` to LIT. theme_mono is already calibrated
  * for this; we leave the screen bg/text to the theme and swap
  * white<->black only in our custom cell styles.
+ *
+ * Crisp battery row: LVGL renders 4bpp anti-aliased glyphs (Montserrat,
+ * and the FontAwesome battery/charge LV_SYMBOL icons baked into it) by
+ * thresholding each pixel's luminance at 127 onto the I1 panel — the soft
+ * edges land near that threshold and produce bulky, fuzzy glyphs with
+ * stray lit pixels. So the battery row avoids fonts/symbols entirely:
+ *   - percentage uses lv_font_unscii_8 (a true 1bpp bitmap font, 8 px,
+ *     no anti-aliasing) so the digits are pixel-exact;
+ *   - the battery is drawn from full-opacity axis-aligned rectangles
+ *     (body outline + terminal nub + a level-proportional fill); these
+ *     are never anti-aliased, so they stay crisp;
+ *   - while charging the fill is replaced by a small lightning bolt drawn
+ *     into a 1bpp lv_canvas (hand-set pixels, also crisp).
+ * The whole row is re-centred on the canvas on every battery update.
  */
 
 #include <zephyr/kernel.h>
@@ -54,19 +68,70 @@
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 #define NUM_PROFILES   4
-#define CELL_W         44
+/* Cells: 6 px margin on the left/right (CELL_W = 64 - 2*6) and the same 6 px
+ * below the last cell (128 - (CELL_TOP_START + 4*H + 3*GAP) = 6), so the side
+ * and bottom gaps to the screen edge match. They start just under the battery
+ * row. */
+#define CELL_W         52
 #define CELL_H         22
-#define CELL_GAP        4
-#define CELL_TOP_START 24    /* y of the first cell's top edge in 64x128 logical canvas */
+#define CELL_GAP        6
+#define CELL_TOP_START 16    /* y of the first cell's top edge in 64x128 logical canvas */
+#define CELL_RADIUS     3
 
 /* Native panel orientation, before our 90° rotation. */
 #define PANEL_W 128
 #define PANEL_H 64
 
+/* Battery row geometry (logical 64-wide canvas). The body has a 1 px lit
+ * border and no inner padding, so its content (interior) area is
+ * BODY-2*border on each axis: 16 x 9.
+ *   - discharging: a level bar inset 1 px inside the interior (14 x 7),
+ *     width proportional to charge;
+ *   - charging:    the interior is filled solid (16 x 9) and a bolt-shaped
+ *     OFF cut-out (BOLT) is overlaid, spanning the full interior height. */
+#define BATT_BODY_W    18
+#define BATT_BODY_H    11
+#define BATT_NUB_W      2
+#define BATT_NUB_H      5
+#define BATT_GAP        3    /* px between the nub and the percentage label */
+#define BATT_ROW_Y      2    /* top margin of the battery row */
+#define BATT_TEXT_H     8    /* lv_font_unscii_8 glyph/line height */
+#define BATT_INNER_W   16    /* interior width  (BODY_W - 2*border) */
+#define BATT_INNER_H    9    /* interior height (BODY_H - 2*border) */
+#define BATT_FILL_W    14    /* level-bar max width  (interior - 2, 1 px inset) */
+#define BATT_FILL_H     7    /* level-bar height     (interior - 2, 1 px inset) */
+
+/* Charge bolt: spans the full interior height; drawn as an OFF cut-out over
+ * the solid fill. */
+#define BOLT_W 7
+#define BOLT_H 9
+
 static lv_obj_t *battery_label;
+static lv_obj_t *batt_body;          /* outlined battery body */
+static lv_obj_t *batt_nub;           /* terminal nub on the right */
+static lv_obj_t *batt_fill;          /* level-proportional fill (hidden while charging) */
+static lv_obj_t *batt_bolt;          /* charge bolt canvas (hidden unless charging) */
 static lv_obj_t *profile_cells[NUM_PROFILES];
 static lv_style_t style_cell_default;
 static lv_style_t style_cell_active;
+static lv_style_t style_batt_body;   /* lit 1 px outline, transparent fill */
+static lv_style_t style_batt_lit;    /* solid lit fill, no border (nub + fill) */
+
+/* 7x9 lightning bolt. Bit (BOLT_W-1) is the leftmost column. A set bit is a
+ * bolt pixel, drawn as an OFF cut-out over the solid (lit) charging fill. */
+static const uint8_t bolt_rows[BOLT_H] = {
+    0x06, /* ....XX. */
+    0x0C, /* ...XX.. */
+    0x18, /* ..XX... */
+    0x3E, /* .XXXXX. */
+    0x7C, /* XXXXX.. */
+    0x0C, /* ...XX.. */
+    0x18, /* ..XX... */
+    0x30, /* .XX.... */
+    0x60, /* XX..... */
+};
+
+static uint8_t bolt_cbuf[LV_CANVAS_BUF_SIZE(BOLT_W, BOLT_H, 1, LV_DRAW_BUF_STRIDE_ALIGN)];
 
 /* ----------------------------------------------------- rotated flush callback
  *
@@ -130,24 +195,45 @@ struct battery_state {
     bool usb_present;
 };
 
-static const char *battery_icon_for(uint8_t level) {
-    if (level > 95) return LV_SYMBOL_BATTERY_FULL;
-    if (level > 65) return LV_SYMBOL_BATTERY_3;
-    if (level > 35) return LV_SYMBOL_BATTERY_2;
-    if (level > 5)  return LV_SYMBOL_BATTERY_1;
-    return LV_SYMBOL_BATTERY_EMPTY;
-}
-
 static void battery_update(struct battery_state state) {
-    char text[16];
-    if (state.usb_present) {
-        snprintf(text, sizeof(text), LV_SYMBOL_CHARGE " %s %u%%",
-                 battery_icon_for(state.level), state.level);
-    } else {
-        snprintf(text, sizeof(text), "%s %u%%",
-                 battery_icon_for(state.level), state.level);
-    }
+    char text[8];
+    snprintf(text, sizeof(text), "%u%%", state.level);
     lv_label_set_text(battery_label, text);
+
+    /* Centre [body][nub] gap [label] across the canvas content width. */
+    lv_point_t sz;
+    lv_text_get_size(&sz, text, &lv_font_unscii_8, 0, 0, LV_COORD_MAX, 0);
+    const int32_t group_w = BATT_BODY_W + BATT_NUB_W + BATT_GAP + sz.x;
+    const int32_t cw = lv_obj_get_content_width(lv_obj_get_parent(batt_body));
+    int32_t x0 = (cw - group_w) / 2;
+    if (x0 < 0) {
+        x0 = 0;
+    }
+
+    lv_obj_align(batt_body, LV_ALIGN_TOP_LEFT, x0, BATT_ROW_Y);
+    lv_obj_align(batt_nub, LV_ALIGN_TOP_LEFT, x0 + BATT_BODY_W,
+                 BATT_ROW_Y + (BATT_BODY_H - BATT_NUB_H) / 2);
+    lv_obj_align(battery_label, LV_ALIGN_TOP_LEFT,
+                 x0 + BATT_BODY_W + BATT_NUB_W + BATT_GAP,
+                 BATT_ROW_Y + (BATT_BODY_H - BATT_TEXT_H) / 2);
+
+    if (state.usb_present) {
+        /* Charging: fill the interior solid and overlay the bolt cut-out. */
+        lv_obj_align(batt_fill, LV_ALIGN_TOP_LEFT, 0, 0);
+        lv_obj_set_size(batt_fill, BATT_INNER_W, BATT_INNER_H);
+        lv_obj_clear_flag(batt_fill, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(batt_bolt, LV_OBJ_FLAG_HIDDEN);
+    } else {
+        /* Discharging: level bar inset 1 px inside the interior. */
+        lv_obj_add_flag(batt_bolt, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(batt_fill, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_align(batt_fill, LV_ALIGN_TOP_LEFT, 1, 1);
+        int32_t fw = (int32_t)state.level * BATT_FILL_W / 100;
+        if (fw < 1 && state.level > 0) {
+            fw = 1;
+        }
+        lv_obj_set_size(batt_fill, fw, BATT_FILL_H);
+    }
 }
 
 static struct battery_state battery_get_state(const zmk_event_t *eh) {
@@ -201,15 +287,77 @@ lv_obj_t *zmk_display_status_screen(void) {
 
     lv_obj_t *screen = lv_obj_create(NULL);
 
-    /* Battery row: Montserrat 12 (~14 px line) at the top-right of the
-     * rotated canvas — that's the top edge once the device is held upright. */
+    /* ---- battery row: custom crisp icon + UNSCII 8 percentage ----
+     * All three pieces are positioned (and re-centred) in battery_update;
+     * here we only create them. */
+
+    /* body: 1 px lit outline, transparent interior, no padding so children are
+     * positioned directly against the inside of the border. */
+    lv_style_init(&style_batt_body);
+    lv_style_set_radius(&style_batt_body, 0);
+    lv_style_set_border_width(&style_batt_body, 1);
+    lv_style_set_border_color(&style_batt_body, lv_color_black()); /* lit on MONO01 */
+    lv_style_set_border_opa(&style_batt_body, LV_OPA_COVER);
+    lv_style_set_bg_opa(&style_batt_body, LV_OPA_TRANSP);
+    lv_style_set_pad_all(&style_batt_body, 0);
+
+    /* solid lit rectangles: nub + level fill. */
+    lv_style_init(&style_batt_lit);
+    lv_style_set_radius(&style_batt_lit, 0);
+    lv_style_set_border_width(&style_batt_lit, 0);
+    lv_style_set_bg_opa(&style_batt_lit, LV_OPA_COVER);
+    lv_style_set_bg_color(&style_batt_lit, lv_color_black());      /* lit on MONO01 */
+    lv_style_set_pad_all(&style_batt_lit, 0);
+
+    batt_body = lv_obj_create(screen);
+    lv_obj_remove_style_all(batt_body);
+    lv_obj_add_style(batt_body, &style_batt_body, 0);
+    lv_obj_set_size(batt_body, BATT_BODY_W, BATT_BODY_H);
+    lv_obj_clear_flag(batt_body, LV_OBJ_FLAG_SCROLLABLE);
+
+    batt_nub = lv_obj_create(screen);
+    lv_obj_remove_style_all(batt_nub);
+    lv_obj_add_style(batt_nub, &style_batt_lit, 0);
+    lv_obj_set_size(batt_nub, BATT_NUB_W, BATT_NUB_H);
+    lv_obj_clear_flag(batt_nub, LV_OBJ_FLAG_SCROLLABLE);
+
+    /* fill: child of the body; position + size set per mode in battery_update
+     * (inset level bar when discharging, full interior when charging). */
+    batt_fill = lv_obj_create(batt_body);
+    lv_obj_remove_style_all(batt_fill);
+    lv_obj_add_style(batt_fill, &style_batt_lit, 0);
+    lv_obj_set_size(batt_fill, 0, BATT_FILL_H);
+    lv_obj_align(batt_fill, LV_ALIGN_TOP_LEFT, 1, 1);
+    lv_obj_clear_flag(batt_fill, LV_OBJ_FLAG_SCROLLABLE);
+
+    /* bolt: 1bpp canvas, drawn last so it sits on top of the fill. Its
+     * background is LIT (palette 1 = black) so it merges with the solid
+     * charging fill, and the bolt pixels are OFF (palette 0 = white) so the
+     * lightning reads as a dark cut-out. Spans the full interior height,
+     * centred horizontally. Hidden unless charging. */
+    batt_bolt = lv_canvas_create(batt_body);
+    lv_obj_remove_style_all(batt_bolt);
+    lv_canvas_set_buffer(batt_bolt, bolt_cbuf, BOLT_W, BOLT_H, LV_COLOR_FORMAT_I1);
+    lv_canvas_set_palette(batt_bolt, 0, lv_color_to_32(lv_color_white(), LV_OPA_COVER));
+    lv_canvas_set_palette(batt_bolt, 1, lv_color_to_32(lv_color_black(), LV_OPA_COVER));
+    lv_canvas_fill_bg(batt_bolt, lv_color_black(), LV_OPA_COVER); /* lit background */
+    for (int32_t by = 0; by < BOLT_H; by++) {
+        for (int32_t bx = 0; bx < BOLT_W; bx++) {
+            if ((bolt_rows[by] >> (BOLT_W - 1 - bx)) & 1) {
+                lv_canvas_set_px(batt_bolt, bx, by, lv_color_white(), LV_OPA_COVER); /* OFF */
+            }
+        }
+    }
+    lv_obj_align(batt_bolt, LV_ALIGN_TOP_LEFT, (BATT_INNER_W - BOLT_W) / 2, 0);
+    lv_obj_add_flag(batt_bolt, LV_OBJ_FLAG_HIDDEN);
+
+    /* percentage label: UNSCII 8 (true 1bpp, no anti-aliasing). */
     battery_label = lv_label_create(screen);
-    lv_obj_set_style_text_font(battery_label, &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_font(battery_label, &lv_font_unscii_8, 0);
     lv_label_set_text(battery_label, "");
-    lv_obj_align(battery_label, LV_ALIGN_TOP_RIGHT, -2, 2);
 
     lv_style_init(&style_cell_default);
-    lv_style_set_radius(&style_cell_default, 3);
+    lv_style_set_radius(&style_cell_default, CELL_RADIUS);
     lv_style_set_border_width(&style_cell_default, 1);
     lv_style_set_border_color(&style_cell_default, lv_color_black());
     lv_style_set_border_opa(&style_cell_default, LV_OPA_COVER);
@@ -234,6 +382,11 @@ lv_obj_t *zmk_display_status_screen(void) {
         lv_obj_align(cell, LV_ALIGN_TOP_MID, 0, CELL_TOP_START + i * stride);
 
         lv_obj_t *digit = lv_label_create(cell);
+        /* UNSCII 16: true 1bpp font (no anti-aliasing). The default 4bpp
+         * Montserrat thresholds asymmetrically when the digit inverts in the
+         * CHECKED state, so the active digit's stems render ~1 px thinner than
+         * the inactive ones. A 1bpp glyph is pixel-identical in both states. */
+        lv_obj_set_style_text_font(digit, &lv_font_unscii_16, 0);
         lv_label_set_text(digit, labels[i]);
         lv_obj_center(digit);
         profile_cells[i] = cell;

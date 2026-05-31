@@ -59,9 +59,26 @@ config LV_Z_VDB_SIZE
 # + one label. lv_obj_create / lv_label_create then return NULL and the
 # next call hardfaults, taking BLE/USB down with it. Our custom screen
 # has 5 labels + 2 styles with bg/color/padding properties, which exceeds
-# 4096 too; bumped to 8192 with measured headroom for the M4 layout.
+# 4096 too. 8192 covered the M4 layout; the battery-icon rework adds the
+# body/nub/fill objects + a charge-bolt canvas, so bumped to 12288 with
+# measured headroom. (~4 KB extra RAM, well within the nRF52840 budget.)
 config LV_Z_MEM_POOL_SIZE
-    default 8192
+    default 12288
+
+# The battery row and profile digits are drawn pixel-crisp for the 1bpp
+# panel using UNSCII (true 1bpp bitmap fonts, no anti-aliasing) instead of
+# the 4bpp Montserrat, which thresholds to bulky/fuzzy glyphs on a mono
+# display — and, for the profile digits, renders ~1 px thinner when the cell
+# inverts in its CHECKED state. UNSCII 8 = battery %, UNSCII 16 = profile
+# digits. The charge bolt is a small I1 lv_canvas, so LV_USE_CANVAS is on.
+config LV_FONT_UNSCII_8
+    default y
+
+config LV_FONT_UNSCII_16
+    default y
+
+config LV_USE_CANVAS
+    default y
 
 # The BUILT_IN ZMK status screen implies these. The CUSTOM screen does not,
 # but without them: theme_mono never initialises, no default font is set on
