@@ -53,6 +53,16 @@ endchoice
 config LV_Z_VDB_SIZE
     default 64
 
+# LVGL object/style/theme pool. ZMK's app/src/display/Kconfig sets this to
+# 4096 only when STATUS_SCREEN_BUILT_IN is selected — with CUSTOM it falls
+# back to Zephyr's 2048 default, which is too small for theme_mono + screen
+# + one label. lv_obj_create / lv_label_create then return NULL and the
+# next call hardfaults, taking BLE/USB down with it. Our custom screen
+# has 5 labels + 2 styles with bg/color/padding properties, which exceeds
+# 4096 too; bumped to 8192 with measured headroom for the M4 layout.
+config LV_Z_MEM_POOL_SIZE
+    default 8192
+
 # The BUILT_IN ZMK status screen implies these. The CUSTOM screen does not,
 # but without them: theme_mono never initialises, no default font is set on
 # the display, lv_label_create renders with a NULL font and faults — which

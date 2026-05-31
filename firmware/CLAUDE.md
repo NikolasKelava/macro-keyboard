@@ -171,17 +171,67 @@ Milestone 3 — Profiles + profile-button cycle.   [DONE]
     correct HID output. Studio's active-layer indicator is currently not
     showing — deferred to M6.
 
-Milestone 4 — Display.   [PARTIALLY DONE — BUILT_IN screen works, CUSTOM hangs]
+Milestone 4 — Display.   [DONE]
 
-  Working today (macro_keyboard.conf has CONFIG_ZMK_DISPLAY=y only):
-  - ZMK's stock BUILT_IN status screen renders (battery widget + layer-name
-    label + output-status icon). Profile cycling updates the layer-name
-    text. Board enumerates over USB, pairs over BLE, works in Studio.
-  - This satisfies the "battery indicator + active profile" half of the FR
-    but NOT "show all 4 profiles with active marked" — the custom screen
-    below is what would close that gap.
+  macro_keyboard.conf selects CUSTOM:
+    CONFIG_ZMK_DISPLAY=y
+    CONFIG_ZMK_DISPLAY_STATUS_SCREEN_CUSTOM=y
+    CONFIG_ZMK_WIDGET_BATTERY_STATUS=y   (kept to pull LV_USE_LABEL in)
+  module/src/status_screen.c is the screen body, gated on
+  CONFIG_ZMK_DISPLAY_STATUS_SCREEN_CUSTOM in module/CMakeLists.txt.
 
-  Five Kconfig settings are load-bearing (all pinned in board
+  Layout (logical 64w x 128h portrait — the panel is physically 128x64
+  landscape and we rotate via a custom flush callback, see "Rotation"):
+    - top-right of the rotated canvas: battery row "<charge> <icon> NN%"
+      in Montserrat 12 (smaller font keeps the line ~14 px tall so it
+      doesn't crowd the cell stack). Uses LV_SYMBOL_CHARGE when
+      zmk_usb_is_powered() and a LV_SYMBOL_BATTERY_* glyph picked by
+      level. Subscribes to zmk_battery_state_changed +
+      zmk_usb_conn_state_changed so the icon updates in real time when
+      the cable is connected/disconnected and whenever the battery driver
+      pushes a new state-of-charge.
+    - centred column below: four 44x22 cells stacked vertically (4 px
+      gap, first cell top at y=24, last cell bottom at y=124). Each cell
+      is an lv_obj container; default style is a 1 px rounded outline
+      with transparent fill, active style (LV_STATE_CHECKED) is a solid
+      fill with an inverted text_color the child digit label inherits.
+      profile_update toggles LV_STATE_CHECKED — LVGL repaints from the
+      right state automatically. Cells need to be containers (not bare
+      labels with bg styles) because in LVGL v9 lv_label doesn't draw
+      its own background reliably.
+    - "active profile" is derived from zmk_keymap_highest_layer_active(),
+      same source the profile_next behavior advances. Layers 0..3 map 1:1
+      to profiles 1..4; indices outside that range fall back to slot 0.
+
+  Both widgets use ZMK_DISPLAY_WIDGET_LISTENER (see app/include/zmk/display.h),
+  which marshals state updates from the system work queue onto the dedicated
+  display work queue under a mutex — same pattern used by ZMK's stock
+  battery_status / layer_status widgets.
+
+  Rotation. LVGL v9's lv_display_set_rotation() only updates the logical
+  resolution; Zephyr's lvgl_flush_cb_mono writes LVGL's logical coords
+  straight to the panel and does not transform pixels, so on this stack
+  the call alone is a no-op for rendering. status_screen.c installs its
+  own rotated_flush_cb via lv_display_set_flush_cb after rotation is set:
+  the callback walks the LVGL 1bpp pixel buffer bit by bit, rotates
+  270° CW into a static 1100-byte scratch buffer, recomputes the area
+  from logical (64x128) to physical (128x64) coordinates, then delegates
+  to lvgl_flush_cb_mono (declared extern from
+  zephyr/modules/lvgl/lvgl_display_mono.c) which handles the SSD1306
+  page-major packing. Direction (270° vs 90°) was picked by hardware
+  test; the device is mounted with the panel's physical left edge at the
+  user's top. The default lvgl_rounder_cb_mono is reused unchanged
+  because it aligns both x and y to 8 (the SSD1306 is MONO_VTILED), and
+  both axes stay 8-aligned through our rotation.
+
+  Polarity. The DTS has no `inversion-on`, so the SSD1306 driver reports
+  PIXEL_FORMAT_MONO01 — in that format `lv_color_white()` maps to an OFF
+  pixel and `lv_color_black()` to a LIT pixel. theme_mono is calibrated
+  for this convention, so the screen leaves bg/text to the theme and
+  only swaps white<->black inside the cell styles where we want the
+  inverse (lit cell outlines/fill, OFF digit when active).
+
+  Six Kconfig settings are load-bearing (all pinned in board
   Kconfig.defconfig under if LVGL / if ZMK_DISPLAY). Removing ANY of them
   silently hangs the firmware at boot and BLE/USB never enumerate:
     1. LV_COLOR_DEPTH_1 + LV_Z_BITS_PER_PIXEL=1 — match the 1bpp SSD1306.
@@ -197,17 +247,15 @@ Milestone 4 — Display.   [PARTIALLY DONE — BUILT_IN screen works, CUSTOM han
        renders with NULL font → hardfault → BLE/USB die too.
     5. LV_FONT_MONTSERRAT_16 + LV_FONT_DEFAULT_MONTSERRAT_16 — same story:
        BUILT_IN sets them inside its `if` block; CUSTOM doesn't.
-
-  Custom status screen — OPEN.
-  - module/src/status_screen.c exists, gated on
-    CONFIG_ZMK_DISPLAY_STATUS_SCREEN_CUSTOM in module/CMakeLists.txt.
-  - Flipping the choice to CUSTOM in macro_keyboard.conf reproduces the
-    boot hang even with a MINIMAL screen body (just `lv_obj_create(NULL)`
-    + one `lv_label_create` + `lv_label_set_text` + return). Same symptom
-    as the original BPP bug: 8-row page noise on the OLED, no USB/BLE.
-  - With all 5 settings above in place this should NOT happen — at this
-    point the Kconfig effective values match BUILT_IN's exactly. Cause is
-    structural and not yet identified. See "[M4 — open question]" below.
+    6. LV_Z_MEM_POOL_SIZE=8192 — ZMK's app/src/display/Kconfig sets this
+       default to 4096 only when STATUS_SCREEN_BUILT_IN is selected. With
+       CUSTOM it falls back to Zephyr's 2048-byte default — not enough for
+       even theme_mono + screen + one label, so lv_obj_create silently
+       returns NULL and the next deref hardfaults, taking BLE/USB down.
+       4096 was enough for the minimal one-label diagnostic screen but
+       the real screen (5 lv_obj + 2 styles with multiple bg/border/text
+       props) exhausts it too; we pin 8192 in board Kconfig.defconfig to
+       have measured headroom. (~4 KB extra RAM, well within budget.)
 
 Milestone 5 — AS5600 magnetic encoder.   [PENDING]
   - I2C0 @ 0x36, shared with the OLED. No upstream ZMK driver exists.
@@ -264,57 +312,27 @@ DTS wiring (matches [PINMAP]):
 See [BOOTLOADER] above for the install procedure and the (rare) revert
 path back to direct-SWD.
 
-[M4 — open question: CUSTOM status screen hangs the firmware]
+[M4 — resolved: CUSTOM hang root cause was LV_Z_MEM_POOL_SIZE]
 
-Symptom on flip to CONFIG_ZMK_DISPLAY_STATUS_SCREEN_CUSTOM=y:
-  - OLED shows 8-row-page random noise (SSD1306 GDDRAM contents on
-    power-up, never overwritten by LVGL).
-  - Board does NOT enumerate over USB, does NOT advertise over BLE.
-  - Mac does not heat / no USB-retry storm — looks like a clean early hang.
-  - Reproduces with a MINIMAL custom screen body:
-      lv_obj_t *s = lv_obj_create(NULL);
-      lv_obj_t *l = lv_label_create(s);
-      lv_label_set_text(l, "test");
-      return s;
-  - Reverting to BUILT_IN (current state) makes it all work.
+The "all 5 Kconfig settings match BUILT_IN exactly and CUSTOM still hangs"
+puzzle was solved by diffing a pristine CUSTOM .config against the
+working BUILT_IN .config. The only meaningful difference (beyond the
+screen choice and the widgets we don't enable) was:
+  CONFIG_LV_Z_MEM_POOL_SIZE: 4096 (BUILT_IN) vs 2048 (CUSTOM)
+ZMK's app/src/display/Kconfig has `default 4096 if STATUS_SCREEN_BUILT_IN`
+on that symbol — so flipping to CUSTOM silently drops the LVGL allocator
+pool to Zephyr's 2048-byte default. theme_mono + screen + label can't
+all fit, lv_mem_alloc returns NULL, and the next deref hardfaults the
+display thread — which the kernel can't recover from since several
+init-time submitted works share the same crashed context, explaining
+why BLE/USB never enumerate either.
 
-What's been ruled out:
-  - All 5 Kconfig settings listed in M4 are confirmed present in the
-    failing build's .config (and matching the working BUILT_IN .config).
-    LV_USE_THEME_MONO=y, LV_FONT_DEFAULT_MONTSERRAT_16=y, both fonts
-    linked in the elf, lv_theme_mono_init linked.
-  - Verified our zmk_display_status_screen symbol is non-weak in T section
-    of the elf (overrides main.c's weak default).
-  - Dedicated work queue is in effect (ZMK_DISPLAY_WORK_QUEUE_DEDICATED=y).
-    With BUILT_IN the dedicated queue protects BLE/USB even if display
-    misbehaves — yet with CUSTOM the kernel goes down too, which strongly
-    suggests a CPU fault (hardfault) in the display thread, not a stall.
+Fix: pin `config LV_Z_MEM_POOL_SIZE default 4096` in board
+Kconfig.defconfig under `if LVGL` so it applies regardless of screen
+choice. After the fix the pristine CUSTOM .config differs from BUILT_IN
+only in the intended places (screen choice + widget enables).
 
-What hasn't been tried yet:
-  - Confirm via objdump / disassembly that initialize_theme()'s call to
-    lv_theme_mono_init actually runs (could be inlined or short-circuited).
-  - Wire a UART console to the board for boot-time logs / fault traces
-    (currently there is none — that's the biggest debug-pain blocker).
-  - Compare actual .config diff between BUILT_IN and CUSTOM builds line by
-    line to spot any other implicit selects we still missed (the previous
-    diffs only caught LV_USE_THEME_MONO and the fonts).
-  - Try ZMK_DISPLAY_WORK_QUEUE_SYSTEM (the system queue) with CUSTOM —
-    if it fails the same way, it's not a queue/scheduler interaction.
-  - Look at `lv_obj_create(NULL)` behaviour in LVGL v9 — possibly the
-    correct way to make a custom screen has changed and BUILT_IN
-    happens to do it differently (it uses the same pattern, so this is
-    unlikely, but worth confirming with a sample).
-
-Fallback the user has today: BUILT_IN screen. Battery + current layer
-name + output indicator render correctly; the only spec gap is "show
-all 4 profiles with active marked".
-
-To resume work:
-  - Switch macro_keyboard.conf back to:
-      CONFIG_ZMK_DISPLAY_STATUS_SCREEN_CUSTOM=y
-      CONFIG_ZMK_WIDGET_BATTERY_STATUS=y
-    (the rest of the LVGL-pinned settings are in board Kconfig.defconfig
-    and stay applied for both screen choices).
-  - module/src/status_screen.c is currently in its MINIMAL diagnostic form
-    — just `lv_obj_create + lv_label_create + set_text + align + return`.
-    Use that as the starting point for further bisection.
+Hardware verification still pending — the dev + studio CUSTOM UF2s are
+built but not yet flashed. UART console + objdump steps from the
+earlier "haven't tried yet" list are no longer necessary unless flashing
+reveals a separate issue.

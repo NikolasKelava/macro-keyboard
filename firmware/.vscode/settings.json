@@ -3,8 +3,8 @@
 }
 
 "files.watcherExclude": {
-    "/Volumes/MDBT50QBOOT/**": true
+    "/Users/nikolaskelava/Documents/macro_keyboard/firmware/zmk_toolchain/app/build/**": true
 },
 "files.exclude": {
-    "/Volumes/MDBT50QBOOT": true
+    "/Users/nikolaskelava/Documents/macro_keyboard/firmware/zmk_toolchain/app/build": true
 }
