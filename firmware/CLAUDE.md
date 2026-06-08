@@ -56,7 +56,10 @@ Custom firmware module (pulled in via -DZMK_EXTRA_MODULES):
   - dts/bindings/behaviors/...    : DT bindings for custom behaviors
   - src/behavior_profile_next.c   : custom &profile_next ZMK behavior (M3)
   - src/status_screen.c           : custom status screen — added in M4
-  - drivers/sensor/as5600/...     : AS5600 encoder driver — added in M5
+  - drivers/sensor/as5600/...     : AS5600 encoder driver (M5)
+  - src/encoder_mode.c            : per-profile encoder-mode state (M5)
+  - src/behavior_encoder_dispatch.c   : &enc_dispatch sensor behavior (M5)
+  - src/behavior_encoder_mode_next.c  : &enc_mode_next key behavior (M5)
 Bootloader (UF2, default flash workflow — see [BOOTLOADER]):
   /firmware/bootloader/macro_keyboard_bootloader.hex
 
@@ -269,19 +272,79 @@ Milestone 4 — Display.   [DONE]
        pin 12288 in board Kconfig.defconfig with measured headroom.
        (~4 KB extra RAM, well within budget.)
 
-Milestone 5 — AS5600 magnetic encoder.   [PENDING]
-  - I2C0 @ 0x36, shared with the OLED. No upstream ZMK driver exists.
-  - Implement as a Zephyr sensor driver inside module/drivers/sensor/as5600/,
-    converting raw angle deltas (0x0E/0x0F registers) into discrete tick
-    events and emitting them as SENSOR_CHAN_ROTATION changes that ZMK's
-    sensor-binding plumbing can consume.
-  - Add per-layer `sensor-bindings = <...>` in macro_keyboard.keymap:
-    P1=volume, P2=vertical scroll, P3=horizontal scroll, P4=volume.
-  - Verify each profile's encoder action on hardware.
+Milestone 5 — AS5600 magnetic encoder.   [DONE]
+
+  Driver (module/drivers/sensor/as5600/). Custom DT compatible
+  `nikolas,as5600` — NOT Zephyr's built-in `ams,as5600`, which would
+  double-instantiate (Zephyr ships a driver for that compatible). The
+  AS5600 has no IRQ wired to the MCU (its OUT pad P0.29 is unused), so the
+  driver POLLS: a dedicated thread (kept off the system work queue so a
+  blocked I2C read on the OLED-shared bus can't stall BLE/USB) reads RAW
+  ANGLE (0x0E/0x0F) every poll-period-ms (5), and synthesises the
+  SENSOR_TRIG_DATA_READY trigger ZMK's keymap-sensors subsystem requires.
+  It reports rotation **delta in degrees** on SENSOR_CHAN_ROTATION (val1
+  whole, val2 micro), only once ≥1° has accumulated (carrying the
+  remainder) — a report with val1==0 hits a legacy "val2 is a raw tick
+  count" path in ZMK's sensor-rotate behaviour.
+  Two signal-conditioning stages (both Kconfig, in the driver's Kconfig):
+    - AS5600_SMOOTHING_SHIFT (1): light wrap-aware EMA low-pass on the angle.
+    - AS5600_DEADBAND_COUNTS (4): ignore motion within N counts of a
+      reference angle; advance the reference only on real movement.
+  The deadband is LOAD-BEARING, not cosmetic: a still magnet jitters ±1-2
+  LSB on RAW angle; without the deadband that random-walks past the 1°
+  report threshold ~1×/s, raising spurious sensor events. ZMK's activity
+  monitor (app/src/activity.c) subscribes to zmk_sensor_event, so those
+  events reset the idle timer — the board never idles (display never
+  blanks, never deep-sleeps) AND the constant sensor→behaviour→HID churn
+  eventually hung the board over USB. Adding the deadband fixed both.
+  Also load-bearing: AS5600_STARTUP_DELAY_MS (1000) — the thread waits
+  before its first I2C read so the OLED/BLE/USB finish init first (touching
+  the shared bus during OLED init was an intermittent boot hang); and
+  AS5600_THREAD_STACK_SIZE (2048) — the thread is the context in which the
+  whole sensor→behaviour→HID chain runs synchronously.
+
+  Per-profile mode (custom firmware — required because ZMK STUDIO CANNOT
+  EDIT ENCODER/SENSOR BINDINGS in this ZMK version: its keymap proto is
+  key-position only, no sensor messages). encoder_mode.c holds one mode per
+  profile (= per keymap layer) in RAM: volume / vertical-scroll /
+  horizontal-scroll, defaults {vol, vscroll, hscroll, vol}. `&enc_dispatch`
+  is the sensor-binding on every layer; it reads the active profile's mode
+  at each tick and emits the action. `&enc_mode_next` (a key, pos 11 on
+  every layer) cycles the current profile's mode. (Persisting the mode
+  across reboot is deferred — see M6.)
+
+  Per-mode resolution. `&enc_dispatch` does NOT use the keymap-sensors
+  node's triggers-per-rotation (that prop is omitted). It accumulates raw
+  micro-degrees and quantises with the CURRENT mode's own value from its DT
+  node: `volume-triggers-per-rotation` (14 → coarse, ~25.7°/step) and
+  `scroll-triggers-per-rotation` (120 → fine, 3°/tick). The sub-tick
+  remainder is carried so mode changes mid-turn are seamless. Practical
+  scroll ceiling ≈ 360 (the driver's ~1° report granularity).
+
+  Scroll path. Does NOT use `&msc` (zmk,behavior-input-two-axis) — that's a
+  velocity×time model for HELD mouse keys and emits ≈0 per brief tick.
+  Instead it reports discrete wheel events straight to the &msc input
+  device: input_report_rel(DEVICE_DT_GET(DT_NODELABEL(msc)),
+  INPUT_REL_WHEEL/HWHEEL, ±ticks, true, K_NO_WAIT) — one report per sensor
+  event (a per-tick loop flooded USB HID TX and hung the board). Needs
+  CONFIG_ZMK_POINTING=y + CONFIG_ZMK_POINTING_SMOOTH_SCROLLING=y (high-res,
+  via HID Resolution Multiplier). The firmware has NO scroll acceleration;
+  the "fast = sudden" ramp was macOS-side and the user disabled it with
+  LinearMouse.
+
+  Hardware-verified: volume (14/rev) + V/H scroll (120/rev) per profile,
+  mode key cycles per-profile mode, display blanks at rest, no hangs on USB
+  or BLE.
 
 Milestone 6 — Power + ZMK Studio polish.   [PENDING]
-  - Verify CONFIG_ZMK_SLEEP behaviour with display + I2C peripherals
-    (display blanks; I2C drops to low-power pinctrl on idle).
+  - Idle/sleep now WORKS (display blanks at rest, deep-sleep reachable) —
+    the AS5600 deadband was the missing piece (see M5). Remaining power
+    item: the encoder poll thread wakes every 5 ms forever, which prevents
+    the SoC's automatic low-power idle between polls (battery drain). For
+    M6, consider gating/slowing the poll on ZMK's activity state.
+  - Deferred M5 follow-ups: (a) on-screen OLED encoder-mode indicator —
+    needs the M4 status-screen layout reworked; (b) persist the per-profile
+    encoder mode across reboot (currently RAM-only in encoder_mode.c).
   - Investigate Studio active-layer indicator not updating
     (Studio sees the 4 layers, but doesn't visibly highlight which is
     active — likely needs ZMK_KEYMAP_LAYER_REORDERING or Studio-side state
@@ -311,8 +374,10 @@ DTS wiring (matches [PINMAP]):
                     zmk,kscan = &kscan_composite (chosen)
   matrix xform    : matrix_transform0 (4r x 4c, sparse — 13 entries)
   phys layout     : physical_layout0 (13 keys, profile btn at (300, 0))
-  i2c0            : P0.24 SDA / P0.25 SCL, fast mode; oled@0x3c node;
-                    BUILT_IN status screen rendering as of M4 partial-done
+  i2c0            : P0.24 SDA / P0.25 SCL, fast mode; oled@0x3c (CUSTOM
+                    status screen, M4) + as5600@0x36 (nikolas,as5600, M5)
+  sensors         : zmk,keymap-sensors node -> &as5600 (M5; resolution is
+                    per-mode on &enc_dispatch, not on this node)
   adc             : enabled; vbatt on AIN2 (P0.04) via zmk,battery-voltage-divider
                     (divider values are placeholders — verify in M6)
 
