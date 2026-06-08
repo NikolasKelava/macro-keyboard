@@ -1,0 +1,23 @@
+# Copyright (c) 2026 The ZMK Contributors
+# SPDX-License-Identifier: MIT
+
+description: |
+  AS5600 12-bit magnetic rotary position sensor used as a ZMK keymap encoder.
+
+  Distinct from the upstream Zephyr "ams,as5600" driver: this driver reports
+  *rotation deltas in degrees* on SENSOR_CHAN_ROTATION (so ZMK's
+  triggers-per-rotation controls the detent feel) and synthesises the
+  SENSOR_TRIG_DATA_READY trigger ZMK's keymap-sensors subsystem requires by
+  polling the RAW ANGLE register (0x0E/0x0F) over I2C on its own thread.
+
+compatible: "nikolas,as5600"
+
+include: [sensor-device.yaml, i2c-device.yaml]
+
+properties:
+  poll-period-ms:
+    type: int
+    default: 5
+    description: |
+      Interval at which the driver thread reads the magnet angle. Smaller =
+      smoother/lower latency but more I2C traffic and less idle time.

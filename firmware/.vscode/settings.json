@@ -1,10 +1,19 @@
 {
-    "cmake.sourceDirectory": "/Users/nikolaskelava/Documents/macro_keyboard/firmware/zmk_toolchain/zephyr/boards"
-}
-
-"files.watcherExclude": {
-    "/Users/nikolaskelava/Documents/macro_keyboard/firmware/zmk_toolchain/app/build/**": true
-},
-"files.exclude": {
-    "/Users/nikolaskelava/Documents/macro_keyboard/firmware/zmk_toolchain/app/build": true
+    "cmake.sourceDirectory": "/Users/nikolaskelava/Documents/macro_keyboard/firmware/zmk_toolchain/zephyr/boards",
+    "files.exclude": {
+        "zmk_toolchain/app/build": true
+    },
+    "files.watcherExclude": {
+        "**/zmk_toolchain/**": true,
+        "**/build/**": true,
+        "**/.west/**": true
+    },
+    "search.exclude": {
+        "zmk_toolchain/app/build": true
+    },
+    "C_Cpp.files.exclude": {
+        "**/zmk_toolchain/**": true,
+        "**/build/**": true
+    },
+    "C_Cpp.intelliSenseEngine": "disabled"
 }

@@ -1,0 +1,8 @@
+description: |
+  Encoder-mode-next behavior. On press, advances the current profile's encoder
+  mode (volume -> vertical scroll -> horizontal scroll -> volume). Place on a
+  regular key on any layer; the mode it changes is that of the active profile.
+
+compatible: "zmk,behavior-encoder-mode-next"
+
+include: zero_param.yaml

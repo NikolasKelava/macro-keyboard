@@ -18,5 +18,16 @@ zephyr_library_include_directories(${ZEPHYR_BASE}/../app/include)
 # M3 — Profiles + profile-button cycle.
 zephyr_library_sources(src/behavior_profile_next.c)
 
+# M5 — Encoder mode switching (each behavior self-gates on its DT node):
+#   encoder_mode.c            shared per-profile mode state
+#   behavior_encoder_mode_next.c  &enc_mode_next key behavior (cycles mode)
+#   behavior_encoder_dispatch.c   &enc_dispatch sensor behavior (acts on mode)
+zephyr_library_sources(src/encoder_mode.c)
+zephyr_library_sources(src/behavior_encoder_mode_next.c)
+zephyr_library_sources(src/behavior_encoder_dispatch.c)
+
 # M4 — Custom display status screen.
 zephyr_library_sources_ifdef(CONFIG_ZMK_DISPLAY_STATUS_SCREEN_CUSTOM src/status_screen.c)
+
+# M5 — AS5600 magnetic encoder (own zephyr_library() in its subdir).
+add_subdirectory_ifdef(CONFIG_AS5600 drivers/sensor/as5600)

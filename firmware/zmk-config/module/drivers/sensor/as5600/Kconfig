@@ -1,0 +1,57 @@
+# Copyright (c) 2026 The ZMK Contributors
+# SPDX-License-Identifier: MIT
+
+menuconfig AS5600
+    bool "AS5600 magnetic rotary encoder (polled I2C keymap sensor)"
+    default y
+    depends on DT_HAS_NIKOLAS_AS5600_ENABLED
+    depends on I2C
+    help
+      Driver for the AS5600 12-bit magnetic angle sensor used as a ZMK keymap
+      encoder. Polls the RAW ANGLE register over I2C on its own thread and
+      reports rotation deltas (in degrees) on SENSOR_CHAN_ROTATION.
+
+if AS5600
+
+config AS5600_THREAD_STACK_SIZE
+    int "AS5600 poll thread stack size"
+    default 2048
+    help
+      The poll thread is the context in which ZMK raises the sensor event and
+      synchronously runs the bound behaviour chain (key press / scroll), so it
+      needs enough headroom for that whole call depth — 1024 was marginal.
+
+config AS5600_THREAD_PRIORITY
+    int "AS5600 poll thread priority"
+    default 10
+    help
+      Preemptible priority of the polling thread. The thread sleeps between
+      reads, so a low priority is fine.
+
+config AS5600_STARTUP_DELAY_MS
+    int "AS5600 startup delay (ms)"
+    default 1000
+    help
+      Delay before the poll thread first touches the (shared) I2C bus, giving
+      the OLED, BLE and USB time to finish initialising first.
+
+config AS5600_SMOOTHING_SHIFT
+    int "AS5600 low-pass smoothing (alpha = 1/2^SHIFT)"
+    default 1
+    help
+      Strength of the wrap-aware EMA applied to the raw angle. 0 disables it
+      (raw passthrough); 1 = alpha 1/2 (light); 2 = alpha 1/4 (more). Higher
+      values smooth more but add a little latency. Light smoothing lets the
+      deadband below be smaller without spurious events creeping back.
+
+config AS5600_DEADBAND_COUNTS
+    int "AS5600 stillness deadband (12-bit counts)"
+    default 4
+    help
+      Movement within this many counts of the reference angle is treated as
+      sensor jitter, not motion. Stops the still magnet's angle noise from
+      raising spurious sensor events that would keep ZMK from going idle (so the
+      display blanks and the board can deep-sleep). Raise it if the display
+      still won't blank at rest; lower it if very slow turns feel unresponsive.
+
+endif # AS5600

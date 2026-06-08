@@ -1,0 +1,35 @@
+description: |
+  Encoder dispatch sensor behavior. Bound as a layer's sensor-binding (zero
+  cells). On each tick it reads the current profile's encoder mode at runtime
+  and emits the matching action: volume keys (&kp), vertical scroll, or
+  horizontal scroll (&msc). Requires CONFIG_ZMK_POINTING for the scroll modes.
+
+compatible: "zmk,behavior-encoder-dispatch"
+
+properties:
+  "#sensor-binding-cells":
+    type: int
+    required: true
+    const: 0
+  tap-ms:
+    type: int
+    default: 5
+    description: |
+      Key-hold duration queued per tick for the volume mode (&kp press/release).
+  scroll-units:
+    type: int
+    default: 1
+    description: |
+      Wheel counts emitted per tick in the scroll modes. Higher = faster scroll.
+      With high-res scrolling the host renders these at finer granularity.
+  volume-triggers-per-rotation:
+    type: int
+    default: 14
+    description: |
+      Volume steps per full turn. Low = coarse (a small turn = one volume step).
+  scroll-triggers-per-rotation:
+    type: int
+    default: 90
+    description: |
+      Scroll ticks per full turn. High = fine, frequent ticks → smoother
+      high-res scrolling that uses the encoder's resolution.

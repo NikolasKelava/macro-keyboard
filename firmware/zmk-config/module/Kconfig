@@ -1,4 +1,12 @@
 # macro_keyboard custom firmware module Kconfig.
 #
-# No project-specific options yet — the custom status screen is selected via
-# the upstream ZMK_DISPLAY_STATUS_SCREEN_CUSTOM choice.
+# The custom status screen is selected via the upstream
+# ZMK_DISPLAY_STATUS_SCREEN_CUSTOM choice.
+
+# M5 — AS5600 encoder. SENSOR is already turned on by ZMK_KEYMAP_SENSORS (our
+# zmk,keymap-sensors node selects it), so the driver lives under `if SENSOR`
+# like ZMK's stock sensor drivers — selecting SENSOR from a symbol that also
+# `depends on I2C` would create a Kconfig recursive dependency.
+if SENSOR
+rsource "drivers/sensor/as5600/Kconfig"
+endif # SENSOR

@@ -27,6 +27,25 @@
             compatible = "zmk,behavior-profile-next";
             #binding-cells = <0>;
         };
+
+        /*
+         * Encoder (AS5600) mode switching — see module/src/encoder_mode.c.
+         * &enc_dispatch is each layer's sensor-binding; it acts on the active
+         * profile's current mode. &enc_mode_next is a key that cycles that
+         * profile's mode (volume -> vertical scroll -> horizontal scroll).
+         */
+        enc_mode_next: enc_mode_next {
+            compatible = "zmk,behavior-encoder-mode-next";
+            #binding-cells = <0>;
+        };
+
+        enc_dispatch: enc_dispatch {
+            compatible = "zmk,behavior-encoder-dispatch";
+            #sensor-binding-cells = <0>;
+            /* Per-mode resolution: volume coarse, scroll fine (high-res). */
+            volume-triggers-per-rotation = <14>;
+            scroll-triggers-per-rotation = <120>;
+        };
     };
 
     keymap {
@@ -38,9 +57,10 @@
             bindings = <
                 &kp C_PREV       &kp C_PLAY_PAUSE  &kp C_NEXT       &kp C_MUTE
                 &kp C_VOL_DN     &kp C_VOL_UP      &kp C_BRI_DN     &kp C_BRI_UP
-                &studio_unlock   &kp C_STOP        &kp C_RW         &kp C_FF
+                &studio_unlock   &kp C_STOP        &kp C_RW         &enc_mode_next
                 &profile_next
             >;
+            sensor-bindings = <&enc_dispatch>;
         };
 
         /*
@@ -53,9 +73,10 @@
             bindings = <
                 &kp LG(Z)        &kp LG(LS(Z))     &kp LG(S)        &kp LG(F)
                 &kp LG(X)        &kp LG(C)         &kp LG(V)        &kp LG(A)
-                &kp HOME         &kp END           &kp PG_UP        &kp PG_DN
+                &kp HOME         &kp END           &kp PG_UP        &enc_mode_next
                 &profile_next
             >;
+            sensor-bindings = <&enc_dispatch>;
         };
 
         /*
@@ -70,9 +91,10 @@
             bindings = <
                 &kp LG(T)        &kp LG(W)         &kp LG(LS(T))    &kp LG(R)
                 &kp LC(TAB)      &kp LC(LS(TAB))   &kp LG(LBKT)     &kp LG(RBKT)
-                &kp LG(N1)       &kp LG(N2)        &kp LG(N3)       &kp LG(N9)
+                &kp LG(N1)       &kp LG(N2)        &kp LG(N3)       &enc_mode_next
                 &profile_next
             >;
+            sensor-bindings = <&enc_dispatch>;
         };
 
         /* Profile 4 — Bluetooth / System */
@@ -81,9 +103,10 @@
             bindings = <
                 &bt BT_SEL 0     &bt BT_SEL 1      &bt BT_SEL 2     &bt BT_SEL 3
                 &bt BT_CLR       &bt BT_NXT        &bt BT_PRV       &bt BT_DISC 0
-                &kp C_VOL_DN     &kp C_VOL_UP      &kp C_MUTE       &kp C_PLAY_PAUSE
+                &kp C_VOL_DN     &kp C_VOL_UP      &kp C_MUTE       &enc_mode_next
                 &profile_next
             >;
+            sensor-bindings = <&enc_dispatch>;
         };
     };
 };

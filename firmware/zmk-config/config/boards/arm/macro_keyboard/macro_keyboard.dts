@@ -127,6 +127,17 @@
         output-ohms = <1000000>;
         full-ohms = <(1000000 + 330000)>;
     };
+
+    /*
+     * Encoder bound in the keymap (AS5600 on i2c0 below). Resolution is NOT set
+     * here: &enc_dispatch quantises per mode (volume-/scroll-triggers-per-
+     * rotation on its node in macro_keyboard.keymap), so the node-level
+     * triggers-per-rotation is intentionally omitted (unused).
+     */
+    sensors: sensors {
+        compatible = "zmk,keymap-sensors";
+        sensors = <&as5600>;
+    };
 };
 
 &reg1 {
@@ -187,6 +198,13 @@
         segment-remap;
         com-invdir;
         prechargep = <0x22>;
+    };
+
+    /* AS5600 magnetic encoder — shares this bus with the OLED (0x3c). */
+    as5600: as5600@36 {
+        status = "okay";
+        compatible = "nikolas,as5600";
+        reg = <0x36>;
     };
 };
 
