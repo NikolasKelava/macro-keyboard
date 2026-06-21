@@ -11,12 +11,14 @@
 
 #define PROFILE_COUNT 4
 
-/* Default mode per profile. Mirrors the original M5 plan:
- * P1 volume, P2 vertical scroll, P3 horizontal scroll, P4 volume. */
+/* Default mode per profile:
+ * P1 media -> volume, P2 productivity -> vertical scroll,
+ * P3 browser -> tabs, P4 bt -> volume.
+ * (Horizontal scroll has no default home; reach it by cycling &enc_mode_next.) */
 static enum encoder_mode modes[PROFILE_COUNT] = {
     ENC_MODE_VOLUME,
     ENC_MODE_VSCROLL,
-    ENC_MODE_HSCROLL,
+    ENC_MODE_TABS,
     ENC_MODE_VOLUME,
 };
 

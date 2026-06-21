@@ -42,9 +42,27 @@
         enc_dispatch: enc_dispatch {
             compatible = "zmk,behavior-encoder-dispatch";
             #sensor-binding-cells = <0>;
-            /* Per-mode resolution: volume coarse, scroll fine (high-res). */
+
+            /* No firmware scroll acceleration — the host smooth-scroll app
+             * (Mac Mouse Fix) owns smoothing + acceleration. The firmware emits
+             * a clean linear stream; the app shapes the feel.
+             *   scroll-triggers-per-rotation = SCROLL SPEED knob (lines/rev).
+             *                                  Lower = slower. The app smooths
+             *                                  between ticks so it stays smooth.
+             *   scroll-units                 = lines per tick (keep 1)
+             *   scroll-max-value             = safety clamp
+             *   volume-/tab-triggers-per-rotation = coarse step size for the
+             *                                  discrete modes (one notch per
+             *                                  volume step / browser tab). */
             volume-triggers-per-rotation = <14>;
+            tab-triggers-per-rotation = <12>;
             scroll-triggers-per-rotation = <120>;
+            scroll-units = <1>;
+            scroll-max-value = <1000>;
+            /* Coalesce scroll reports to <=~83/s. Sustained ~200/s per-tick
+             * reports over USB wedge the HID TX path and hang the board; this
+             * caps the rate without losing rotation (remainder carried). */
+            scroll-min-interval-ms = <12>;
         };
     };
 

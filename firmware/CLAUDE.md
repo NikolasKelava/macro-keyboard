@@ -303,38 +303,51 @@ Milestone 5 — AS5600 magnetic encoder.   [DONE]
   AS5600_THREAD_STACK_SIZE (2048) — the thread is the context in which the
   whole sensor→behaviour→HID chain runs synchronously.
 
-  Per-profile mode (custom firmware — required because ZMK STUDIO CANNOT
-  EDIT ENCODER/SENSOR BINDINGS in this ZMK version: its keymap proto is
-  key-position only, no sensor messages). encoder_mode.c holds one mode per
-  profile (= per keymap layer) in RAM: volume / vertical-scroll /
-  horizontal-scroll, defaults {vol, vscroll, hscroll, vol}. `&enc_dispatch`
-  is the sensor-binding on every layer; it reads the active profile's mode
-  at each tick and emits the action. `&enc_mode_next` (a key, pos 11 on
-  every layer) cycles the current profile's mode. (Persisting the mode
-  across reboot is deferred — see M6.)
+  Per-profile mode (custom firmware — ZMK STUDIO CANNOT EDIT ENCODER/SENSOR
+  BINDINGS in this ZMK version: keymap proto is key-position only). encoder_mode.c
+  holds one mode per profile (= per layer) in RAM: volume / vertical-scroll /
+  horizontal-scroll / TABS. Defaults {vol, vscroll, tabs, vol} (browser profile
+  defaults to tabs). `&enc_dispatch` is the sensor-binding on every layer; it
+  reads the active profile's mode each tick and acts. `&enc_mode_next` (key,
+  pos 11) cycles the mode. (Persisting across reboot deferred — M6.)
 
-  Per-mode resolution. `&enc_dispatch` does NOT use the keymap-sensors
-  node's triggers-per-rotation (that prop is omitted). It accumulates raw
-  micro-degrees and quantises with the CURRENT mode's own value from its DT
-  node: `volume-triggers-per-rotation` (14 → coarse, ~25.7°/step) and
-  `scroll-triggers-per-rotation` (120 → fine, 3°/tick). The sub-tick
-  remainder is carried so mode changes mid-turn are seamless. Practical
-  scroll ceiling ≈ 360 (the driver's ~1° report granularity).
+  Actions & resolution (all DT props on &enc_dispatch; it quantises accumulated
+  micro-degrees per-mode, carrying the sub-tick remainder):
+    - volume → &kp C_VOL_UP/DN, coarse (volume-triggers-per-rotation 14).
+    - tabs   → &kp LC(TAB)/LC(LS(TAB)) (next/prev browser tab; Ctrl+Tab works
+               cross-browser on macOS), coarse (tab-triggers-per-rotation 12).
+    - V/H scroll → wheel reports to the &msc input device, finer
+               (scroll-triggers-per-rotation 120). Needs CONFIG_ZMK_POINTING=y.
+               NOT the &msc *behavior* (a velocity×time model for held keys,
+               ≈0 per tick) — uses input_report_rel on the &msc input device.
+    CW = volume-up / scroll-up / scroll-right / next-tab.
 
-  Scroll path. Does NOT use `&msc` (zmk,behavior-input-two-axis) — that's a
-  velocity×time model for HELD mouse keys and emits ≈0 per brief tick.
-  Instead it reports discrete wheel events straight to the &msc input
-  device: input_report_rel(DEVICE_DT_GET(DT_NODELABEL(msc)),
-  INPUT_REL_WHEEL/HWHEEL, ±ticks, true, K_NO_WAIT) — one report per sensor
-  event (a per-tick loop flooded USB HID TX and hung the board). Needs
-  CONFIG_ZMK_POINTING=y + CONFIG_ZMK_POINTING_SMOOTH_SCROLLING=y (high-res,
-  via HID Resolution Multiplier). The firmware has NO scroll acceleration;
-  the "fast = sudden" ramp was macOS-side and the user disabled it with
-  LinearMouse.
+  Scroll feel is HOST-OWNED, not firmware (hard-won; don't re-litigate). macOS:
+    - IGNORES the high-res Resolution Multiplier for this device (SMOOTH_SCROLLING
+      on vs off builds felt identical);
+    - VELOCITY-CAPS the report RATE — more reports/s does NOT scroll faster
+      (verified with 10× reports, and USB vs BLE: all identical);
+    - honours per-report MAGNITUDE, but native macOS adds its own accel "jump"
+      and LinearMouse normalises magnitude to a fixed distance.
+    So firmware emits a CLEAN LINEAR line-delta stream (d_scroll = ticks ×
+    scroll-units, scroll-units=1, NO firmware acceleration) and a host smooth-
+    scroll app owns smoothing+accel+inertia. Mac Mouse Fix (set to "use macOS
+    settings") gives smooth+accel+precision and also fixes VS Code fast-scroll.
+    Base scroll speed = scroll-triggers-per-rotation. SMOOTH_SCROLLING left y
+    (harmless on macOS, helps high-res-aware hosts).
 
-  Hardware-verified: volume (14/rev) + V/H scroll (120/rev) per profile,
-  mode key cycles per-profile mode, display blanks at rest, no hangs on USB
-  or BLE.
+  USB HANG (resolved). The sensor→behaviour→HID chain runs synchronously in the
+  AS5600 poll thread (sensors.c non-ISR path runs the trigger in caller ctx), and
+  each USB HID send blocks on a 30 ms semaphore (app/src/usb_hid.c). A fast spin
+  fires the sensor ~200 Hz; ONE HID REPORT PER TICK sustained wedges USB HID TX
+  and hangs the board (a host polling hiccup → 30 ms stall). Fix: &enc_dispatch
+  COALESCES scroll line-deltas and emits at most once per scroll-min-interval-ms
+  (12 ≈ 83/s, below the always-stable BLE rate), carrying the signed remainder so
+  no rotation is lost; macOS rate-cap + app smoothing make it imperceptible. (The
+  rate is what hung it, not the report path.)
+
+  Hardware-verified: volume + V/H scroll + tabs per profile, mode key cycles,
+  display blanks at rest, no USB/BLE hang under sustained scrolling.
 
 Milestone 6 — Power + ZMK Studio polish.   [PENDING]
   - Idle/sleep now WORKS (display blanks at rest, deep-sleep reachable) —

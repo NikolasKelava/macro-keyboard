@@ -14,9 +14,10 @@
 #pragma once
 
 enum encoder_mode {
-    ENC_MODE_VOLUME = 0, /* CW = volume up      / CCW = volume down  */
-    ENC_MODE_VSCROLL,    /* CW = scroll up      / CCW = scroll down  */
-    ENC_MODE_HSCROLL,    /* CW = scroll right   / CCW = scroll left  */
+    ENC_MODE_VOLUME = 0, /* CW = volume up      / CCW = volume down       */
+    ENC_MODE_VSCROLL,    /* CW = scroll up      / CCW = scroll down        */
+    ENC_MODE_HSCROLL,    /* CW = scroll right   / CCW = scroll left        */
+    ENC_MODE_TABS,       /* CW = next tab       / CCW = previous tab       */
     ENC_MODE_COUNT,
 };
 

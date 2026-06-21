@@ -1,8 +1,14 @@
 description: |
   Encoder dispatch sensor behavior. Bound as a layer's sensor-binding (zero
   cells). On each tick it reads the current profile's encoder mode at runtime
-  and emits the matching action: volume keys (&kp), vertical scroll, or
-  horizontal scroll (&msc). Requires CONFIG_ZMK_POINTING for the scroll modes.
+  and emits the matching action: volume keys (&kp), vertical/horizontal scroll
+  (&msc), or browser tab switching (Ctrl+Tab / Ctrl+Shift+Tab). Requires
+  CONFIG_ZMK_POINTING for the scroll modes.
+
+  Scroll is a CLEAN LINEAR stream of wheel line-deltas (d_scroll = ticks *
+  scroll-units); the host smooth-scroll app (Mac Mouse Fix / Mos) owns smoothing
+  and acceleration. There is intentionally no firmware acceleration. Base scroll
+  speed = scroll-triggers-per-rotation (lines per revolution).
 
 compatible: "zmk,behavior-encoder-dispatch"
 
@@ -15,21 +21,46 @@ properties:
     type: int
     default: 5
     description: |
-      Key-hold duration queued per tick for the volume mode (&kp press/release).
+      Key-hold duration queued per tick for the discrete key modes
+      (volume & tabs: &kp press/release).
   scroll-units:
     type: int
     default: 1
     description: |
-      Wheel counts emitted per tick in the scroll modes. Higher = faster scroll.
-      With high-res scrolling the host renders these at finer granularity.
+      Wheel line-delta emitted per scroll tick. Keep at 1 for a clean stream the
+      host app can smooth; raising it multiplies base scroll speed.
+  scroll-max-value:
+    type: int
+    default: 1000
+    description: |
+      Safety clamp on the per-report wheel magnitude (max int16 = 32767). Keeps a
+      glitchy sensor read from emitting an enormous single scroll.
+  scroll-min-interval-ms:
+    type: int
+    default: 12
+    description: |
+      Minimum gap between scroll HID reports. The sensor fires up to ~200 Hz on a
+      fast spin; emitting a report per tick, sustained, wedges the USB HID TX path
+      and hangs the board. Line-deltas are coalesced and emitted at most this
+      often (12 ms ~= 83/s), carrying the remainder so no rotation is lost. macOS
+      caps scroll rate and the host app smooths between reports, so it is
+      imperceptible. 0 disables coalescing (one report per tick — may hang USB).
   volume-triggers-per-rotation:
     type: int
     default: 14
     description: |
       Volume steps per full turn. Low = coarse (a small turn = one volume step).
+  tab-triggers-per-rotation:
+    type: int
+    default: 16
+    description: |
+      Tab switches per full turn in tab mode. Coarse so one notch ~= one tab; a
+      small turn switches a single browser tab.
   scroll-triggers-per-rotation:
     type: int
-    default: 90
+    default: 80
     description: |
-      Scroll ticks per full turn. High = fine, frequent ticks → smoother
-      high-res scrolling that uses the encoder's resolution.
+      Scroll ticks (line-deltas) per full turn = base scroll speed AND
+      resolution. Lower = slower / coarser, higher = faster / finer. This is the
+      main scroll-speed knob now that firmware acceleration is gone; the host app
+      smooths between ticks, so a moderate value still feels smooth.
