@@ -54,4 +54,18 @@ config AS5600_DEADBAND_COUNTS
       display blanks and the board can deep-sleep). Raise it if the display
       still won't blank at rest; lower it if very slow turns feel unresponsive.
 
+config AS5600_IDLE_POLL_PERIOD_MS
+    int "AS5600 idle poll period (ms)"
+    default 100
+    help
+      Poll period used once ZMK's activity state leaves ACTIVE (i.e. after the
+      idle timeout, when the display has blanked). At rest the deadband produces
+      no events, so the fast poll-period-ms wakes the CPU ~200x/s for nothing and
+      blocks the SoC's low-power idle — the M6 power item. Backing off to this
+      slower rate while idle cuts those wakeups; the first encoder notch after
+      idle then raises a sensor event, which resets activity to ACTIVE and the
+      thread returns to poll-period-ms on the next loop. Set equal to
+      poll-period-ms to disable the back-off. Worst-case wake latency for that
+      first notch is this period.
+
 endif # AS5600

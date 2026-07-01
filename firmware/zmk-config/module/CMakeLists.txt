@@ -15,6 +15,9 @@ zephyr_library()
 # against them.
 zephyr_library_include_directories(${ZEPHYR_BASE}/../app/include)
 
+# M6 — Reboot on fatal error instead of Zephyr's default spin-forever halt.
+zephyr_library_sources(src/fatal.c)
+
 # M3 — Profiles + profile-button cycle.
 zephyr_library_sources(src/behavior_profile_next.c)
 

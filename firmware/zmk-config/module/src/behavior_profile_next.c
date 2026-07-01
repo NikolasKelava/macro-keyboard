@@ -25,12 +25,21 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
 
-#define PROFILE_COUNT 4
+/* Number of profiles == number of keymap layers currently present (contiguous
+ * valid indices from 0). Read live so cycling tracks however many profiles
+ * exist (default 5; Studio add/remove once layer-reordering is enabled). */
+static uint8_t profile_count(void) {
+    uint8_t n = 0;
+    while (n < 32 && zmk_keymap_layer_index_to_id(n) != ZMK_KEYMAP_LAYER_ID_INVAL) {
+        n++;
+    }
+    return (n == 0) ? 1 : n;
+}
 
 static int on_keymap_binding_pressed(struct zmk_behavior_binding *binding,
                                      struct zmk_behavior_binding_event event) {
     zmk_keymap_layer_index_t cur = zmk_keymap_highest_layer_active();
-    zmk_keymap_layer_index_t next_idx = (cur + 1) % PROFILE_COUNT;
+    zmk_keymap_layer_index_t next_idx = (cur + 1) % profile_count();
     zmk_keymap_layer_id_t next_id = zmk_keymap_layer_index_to_id(next_idx);
 
     LOG_DBG("profile_next: layer %d -> %d", cur, next_idx);

@@ -31,6 +31,8 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
+#include <zmk/activity.h>
+
 #include "as5600.h"
 
 LOG_MODULE_REGISTER(AS5600, CONFIG_SENSOR_LOG_LEVEL);
@@ -111,7 +113,19 @@ static void as5600_thread(void *p1, void *p2, void *p3) {
     k_msleep(CONFIG_AS5600_STARTUP_DELAY_MS);
 
     while (1) {
-        k_msleep(cfg->poll_period_ms);
+        /* Back off the poll rate once the board leaves ACTIVE (display blanked
+         * after the idle timeout). At rest the deadband emits no events, so the
+         * fast period would keep waking the CPU ~200x/s and block the SoC's
+         * low-power idle (M6 power item). The first notch after idle still
+         * raises a sensor event -> activity resets to ACTIVE -> we're back to
+         * the fast period next loop. (In SLEEP the SoC is powered off and this
+         * thread isn't running at all, so only IDLE is in play here.) */
+        uint32_t period = cfg->poll_period_ms;
+        if (zmk_activity_get_state() != ZMK_ACTIVITY_ACTIVE &&
+            CONFIG_AS5600_IDLE_POLL_PERIOD_MS > period) {
+            period = CONFIG_AS5600_IDLE_POLL_PERIOD_MS;
+        }
+        k_msleep(period);
 
         uint16_t angle;
         if (as5600_read_angle(dev, &angle) != 0) {

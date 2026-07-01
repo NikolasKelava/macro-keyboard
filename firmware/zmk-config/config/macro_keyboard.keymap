@@ -5,16 +5,27 @@
  * macro_keyboard keymap
  *
  *   Physical layout: 3 rows x 4 cols + 1 profile button (13 keys total).
- *   Each layer represents one profile (1..4). The profile button is the
- *   13th key on every layer and is bound to `&profile_next`, a custom
- *   behavior that always advances to the next profile based on the
- *   current highest-active layer (1 -> 2 -> 3 -> 4 -> 1).
+ *   Each layer represents one profile. There are 5 profiles by default,
+ *   all blank: the only pre-bound keys are the profile button (pos 12,
+ *   `&profile_next`) and the encoder-mode key (pos 3, `&enc_mode_next`,
+ *   physically directly under the profile button). Everything else is
+ *   `&none` — assign macros in ZMK Studio. `&profile_next` advances to the
+ *   next profile based on the current highest-active layer and now wraps on
+ *   the live layer count (so it tracks however many profiles exist).
+ *
+ *   Profiles 6 and 7 are `status = "reserved"` — spare slots so ZMK Studio's
+ *   "add layer" can grow the profile count past the default 5 (up to 7, the
+ *   most the status screen can show). They count toward ZMK_KEYMAP_LAYERS_LEN
+ *   only in the Studio build (reordering on) and start inactive; the dev build
+ *   (no reordering) ignores them entirely, so it stays at 5. They carry the
+ *   same pre-bound keys + sensor binding as the others, so an added profile is
+ *   functional immediately and can be renamed/edited in Studio.
  *
  *   `&profile_next` is implemented in zmk-config/module/src/behavior_profile_next.c
  *   and declared as a DT node below.
  *
- *   Defaults are placeholders; everything is editable via ZMK Studio.
- *   `&studio_unlock` is reachable on layer 0 (profile 1), key index 8.
+ *   `&studio_unlock` is kept on profile 1 (pos 8) so ZMK Studio can be
+ *   unlocked to edit — without it bound to a key Studio cannot be unlocked.
  */
 
 #include <behaviors.dtsi>
@@ -69,59 +80,87 @@
     keymap {
         compatible = "zmk,keymap";
 
-        /* Profile 1 — Media */
-        media_layer {
-            display-name = "Media";
-            bindings = <
-                &kp C_PREV       &kp C_PLAY_PAUSE  &kp C_NEXT       &kp C_MUTE
-                &kp C_VOL_DN     &kp C_VOL_UP      &kp C_BRI_DN     &kp C_BRI_UP
-                &studio_unlock   &kp C_STOP        &kp C_RW         &enc_mode_next
-                &profile_next
-            >;
-            sensor-bindings = <&enc_dispatch>;
-        };
-
         /*
-         * Profile 2 — Productivity (macOS shortcuts).
-         * macOS app shortcuts use Cmd (LG), not Ctrl (LC). Redo on macOS is
-         * Cmd+Shift+Z, not Cmd+Y. Edit in Studio for non-Mac hosts.
+         * 5 blank profiles. Only the encoder-mode key (pos 3, directly under
+         * the profile button) and the profile button (pos 12) are pre-bound;
+         * everything else is &none, to be assigned in ZMK Studio. Profile 1
+         * additionally keeps &studio_unlock (pos 8) so Studio can be unlocked.
          */
-        productivity_layer {
-            display-name = "Productivity";
+        profile_1 {
+            display-name = "P1";
             bindings = <
-                &kp LG(Z)        &kp LG(LS(Z))     &kp LG(S)        &kp LG(F)
-                &kp LG(X)        &kp LG(C)         &kp LG(V)        &kp LG(A)
-                &kp HOME         &kp END           &kp PG_UP        &enc_mode_next
+                &none            &none             &none            &enc_mode_next
+                &none            &none             &none            &none
+                &studio_unlock   &none             &none            &none
                 &profile_next
             >;
             sensor-bindings = <&enc_dispatch>;
         };
 
-        /*
-         * Profile 3 — Browser / Tabs (macOS shortcuts).
-         *   Cmd+T new tab, Cmd+W close tab, Cmd+Shift+T reopen, Cmd+R reload.
-         *   Ctrl+Tab still cycles tabs in browsers on macOS.
-         *   Cmd+[ / Cmd+] for back / forward.
-         *   Cmd+1..3, Cmd+9 jump to specific tab.
-         */
-        browser_layer {
-            display-name = "Browser";
+        profile_2 {
+            display-name = "P2";
             bindings = <
-                &kp LG(T)        &kp LG(W)         &kp LG(LS(T))    &kp LG(R)
-                &kp LC(TAB)      &kp LC(LS(TAB))   &kp LG(LBKT)     &kp LG(RBKT)
-                &kp LG(N1)       &kp LG(N2)        &kp LG(N3)       &enc_mode_next
+                &none            &none             &none            &enc_mode_next
+                &none            &none             &none            &none
+                &none            &none             &none            &none
                 &profile_next
             >;
             sensor-bindings = <&enc_dispatch>;
         };
 
-        /* Profile 4 — Bluetooth / System */
-        bt_layer {
-            display-name = "BT";
+        profile_3 {
+            display-name = "P3";
             bindings = <
-                &bt BT_SEL 0     &bt BT_SEL 1      &bt BT_SEL 2     &bt BT_SEL 3
-                &bt BT_CLR       &bt BT_NXT        &bt BT_PRV       &bt BT_DISC 0
-                &kp C_VOL_DN     &kp C_VOL_UP      &kp C_MUTE       &enc_mode_next
+                &none            &none             &none            &enc_mode_next
+                &none            &none             &none            &none
+                &none            &none             &none            &none
+                &profile_next
+            >;
+            sensor-bindings = <&enc_dispatch>;
+        };
+
+        profile_4 {
+            display-name = "P4";
+            bindings = <
+                &none            &none             &none            &enc_mode_next
+                &none            &none             &none            &none
+                &none            &none             &none            &none
+                &profile_next
+            >;
+            sensor-bindings = <&enc_dispatch>;
+        };
+
+        profile_5 {
+            display-name = "P5";
+            bindings = <
+                &none            &none             &none            &enc_mode_next
+                &none            &none             &none            &none
+                &none            &none             &none            &none
+                &profile_next
+            >;
+            sensor-bindings = <&enc_dispatch>;
+        };
+
+        /* Reserved spare slots for Studio "add layer" (max 7 profiles). */
+        profile_6 {
+            status = "reserved";
+            display-name = "P6";
+            bindings = <
+                &none            &none             &none            &enc_mode_next
+                &none            &none             &none            &none
+                &none            &none             &none            &none
+                &profile_next
+            >;
+            sensor-bindings = <&enc_dispatch>;
+        };
+
+        profile_7 {
+            status = "reserved";
+            display-name = "P7";
+            bindings = <
+                &none            &none             &none            &enc_mode_next
+                &none            &none             &none            &none
+                &none            &none             &none            &none
                 &profile_next
             >;
             sensor-bindings = <&enc_dispatch>;
