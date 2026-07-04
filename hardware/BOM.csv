@@ -1,19 +1,19 @@
-Component;Qty per keyboard unit;Unit Cost (€);Qty of components in line;Line Cost (€);Notes;Vendor for non LCSC Parts
-PCB fabrication (JLCPCB);1; 5,11 € ;5; 25,57 € ;"bare board; min order qty 5";
-PCB shipping;1; 8,35 € ;5; 41,76 € ;;
-PCBA assembly + JLC-sourced parts;1; 21,67 € ;5; 108,35 € ;parts JLC populates — production/bom.csv;
-PCB customs duties & taxes;1; 6,21 € ;5; 31,03 € ;;
-PCB order Total (Line);;;; 206,71 € ;;
-;;;;;;
-OLED 128x64 SSD1306 module;1; 3,53 € ;3; 10,59 € ;on-PCB, self-soldered; Amazon 
-(MX) switches (Akko Rosewood);13; 0,44 € ;45; 19,99 € ;on-PCB, self-soldered; Amazon 
-JST XH 3-pin connector;1; 0,08 € ;100; 8,19 € ;on-PCB, self-soldered; Amazon 
-Encoder (608) ball bearing;1; 0,60 € ;10; 5,99 € ;off-PCB; Amazon 
-Encoder magnet (5*2 mm);1; 0,07 € ;100; 6,99 € ;off-PCB; Amazon 
-LiPo battery 2000mAh;1; 11,00 € ;1; 11,00 € ;off-PCB; (2pin) Amazon 
-;;;;;;
-Enclosure + Keycaps + Encoder knob;1; 4,00 € ;1; 4,00 € ;3D printed (ca. 150g);
-Enclosure screws (M2*12);4; 0,22 € ;25; 5,40 € ;ISO 14580; Wuerth 
-Enclosure threaded inserts (M2*3);4; 0,10 € ;100; 9,90 € ;for 3D printed enclosure; cnckitchen 
-;;;;;;
-TOTAL build cost (per unit);; 61,38 € ;;;;
+Component,Qty per keyboard unit,Unit Cost (€),Qty of components in line,Line Cost (€),Notes,Vendor for non LCSC Parts
+PCB fabrication (JLCPCB),1,"5,11 €",5,"25,57 €","bare board; min order qty 5",
+PCB shipping,1,"8,35 €",5,"41,76 €",,
+PCBA assembly + JLC-sourced parts,1,"21,67 €",5,"108,35 €",parts JLC populates — production/bom.csv,
+PCB customs duties & taxes,1,"6,21 €",5,"31,03 €",,
+PCB order Total (Line),,,,"206,71 €",,
+,,,,,,
+OLED 128x64 SSD1306 module,1,"3,53 €",3,"10,59 €","on-PCB, self-soldered",Amazon
+(MX) switches (Akko Rosewood),13,"0,44 €",45,"19,99 €","on-PCB, self-soldered",Amazon
+JST XH 3-pin connector,1,"0,08 €",100,"8,19 €","on-PCB, self-soldered",Amazon
+Encoder (608) ball bearing,1,"0,60 €",10,"5,99 €",off-PCB,Amazon
+Encoder magnet (5*2 mm),1,"0,07 €",100,"6,99 €",off-PCB,Amazon
+LiPo battery 2000mAh,1,"11,00 €",1,"11,00 €",off-PCB,(2pin) Amazon
+,,,,,,
+Enclosure + Keycaps + Encoder knob,1,"4,00 €",1,"4,00 €",3D printed (ca. 150g),
+Enclosure screws (M2*12),4,"0,22 €",25,"5,40 €",ISO 14580,Wuerth
+Enclosure threaded inserts (M2*3),4,"0,10 €",100,"9,90 €",for 3D printed enclosure,cnckitchen
+,,,,,,
+TOTAL build cost (per unit),,"61,38 €",,,,
