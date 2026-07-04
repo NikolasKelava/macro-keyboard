@@ -1,18 +1,57 @@
 # Macro Keyboard — Build Journal
 
-Devlog for my **Hack Club Horizons** hardware submission: a custom Bluetooth LE
+Devlog for my **Hack Club Horizons** hardware submission: a custom, wireless Bluetooth LE
 macro keypad (12 keys + magnetic rotary encoder + OLED) built on an nRF52840
 module and running ZMK.
 
-Time is tracked with **Hackatime** (Wakatime → Hackatime) for firmware work since April.
+Time is tracked with **Hackatime** (Wakatime → Hackatime) for firmware work since May.
 Hardware/CAD/research sessions are recorded as **timelapses** (Lapse) and linked
 per entry, since Lookout isn't supported for Horizons yet.
 
-I have started this project a long time ago (more than a year), but since my time is more or less tracked since April
-via Hackatime this journal for the project also starts with entries since april.
+I actually started this project more than a year ago, and I've been documenting it the whole way — just not
+in JOURNAL.md form. This file pulls all of that together into one devlog. It starts on May 23 because that's
+the day I began tracking my time with Hackatime; plenty happened before then, I just wasn't logging the hours.
 
 
 ## Entries
+
+#### May 23: Shorted my debugger probe - not my proudest journal entry
+
+Back then I flashed firmware over SWD with a DAPLink probe instead of the UF2 bootloader (I moved to the
+bootloader afterwards). Cortex-M 10-pin connector, pyocd, nothing fancy.
+
+So one day I do the exact same thing I always do: connect the probe to the macro keyboard, kick off pyocd,
+and... the progress bar just sits there and doesn't advance. No big deal — I unplug the probe, plug it back in,
+re-run pyocd, and flash again.
+
+And then the debugger probe starts smoking and then the little activity light that tells you something's happening just goes dark. RIP.
+
+So what happened? Nothing was different from every other time I'd flashed this thing. The only way to
+physically cook the probe like that is a mismatch on the connector pads. So I pulled up the schematic and
+went pin by pin — the on-PCB connector vs. the probe's connector.
+
+And then it hit me: I'd plugged the connector in from the *other* side of the PCB. Mirrored. That's the whole
+story right there. I did that because I couldn't reach the other side - and I just didn't think through that this 10 pin 
+connector with specific pins is not reversible like a USB port...
+
+![The actual orientation the connector should go in](journal-assets/2026-05-23-pcb-view.png)
+
+![Schematic with the mismatched nets marked in my handwriting](journal-assets/2026-05-23-withconn.png)
+
+In the schematic you can see the nets that were *supposed* to line up, and (in my handwriting) the nets that
+actually got connected once the plug was flipped around. Ground and 3V3 ended up on the same net → dead short
+straight through the probe. Hence the smoke.
+
+I reordered the debugger probe on amazon for 5€, so it could have been worse than just my probe shorting. If I shorted
+the keypad or (worse) my mac, this would have been WAY worse.
+It's still very embarrassing.
+
+**tl;dr:** Flashed over SWD like always, but plugged the 10-pin Cortex-M connector in mirrored (from the wrong
+side of the PCB). That put GND and 3V3 on the same net, shorted the probe, and let the debugger smoke. For the future I
+will make sure to pay attention to the correct orientation of connectors.
+
+**Time spent this session: 1.5 hours**
+
 
 #### July 1: Fixed the LiPo not being charging
 
@@ -21,7 +60,7 @@ I got the LiPo battery of my macro keyboard to charge, so that's pretty neat.
 Observation: When supplying the keypad with power, the charging indicator light up on the screen, but the
 screen widget for the battery capacity would only show a static battery percentage.
 
-What could cause this problem? Short answer: The battery not being charging, bruh
+What could cause this problem? Short answer:
 1. Faulty screen indicator
 2. Faulty resistors in the voltage divider
 3. Charging IC not charging the LiPo: Could be due to something disabling the IC.
@@ -110,7 +149,8 @@ In the end of the master BOM I calculated the approximate price per keyboard uni
 To the main BOM I also added Notes to clarify in which group the components belong (on-PCB, on-PCB PCBA, off-PCB) beside the vendor.
 
 ![Picture of cost BOM](journal-assets/2026-07-02-BOM.png)
+Sorry that this is the only pic...
 
-**tl;dr:** idk bro, that shi just tedious work
+**tl;dr:** I added the BOMs, which gave me a good view on the hardware of this project.
 
 **Time spent this session: 3 hours**
