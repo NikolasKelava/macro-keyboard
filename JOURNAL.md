@@ -31,15 +31,15 @@ and... the progress bar just sits there and doesn't advance. No big deal — I u
 re-run pyocd, and flash again.
 
 And then the debugger probe starts smoking and then the little activity light that tells you something's happening 
-just goes dark. RIP.
+just goes dark.
 
 So what happened? Nothing was different from every other time I'd flashed this thing. The only way to
 physically cook the probe like that is a mismatch on the connector pads. So I pulled up the schematic and
 went pin by pin — the on-PCB connector vs. the probe's connector.
 
-And then it hit me: I'd plugged the connector in from the *other* side of the PCB. Mirrored. That's the whole
-story right there. I did that because I couldn't reach the other side - and I just didn't think through that this 
-10 pin connector with specific pins is not reversible like a USB port...
+And then it hit me: I'd plugged the connector in from the *other* side of the PCB. Mirrored.
+I did that because I couldn't reach the other side - and I just didn't think through that this 10 pin connector with
+specific pins is not reversible like a USB port...
 
 ![The actual orientation the connector should go in](journal-assets/2026-05-23-pcb-view.png)
 
@@ -50,7 +50,7 @@ actually got connected once the plug was flipped around. Ground and 3V3 ended up
 straight through the probe. Hence the smoke.
 
 I reordered the debugger probe on amazon for 5€, so it could have been worse than just my probe shorting. If I 
-shortedthe keypad or (worse) my mac, this would have been WAY worse. It's still very embarrassing.
+shorted the keypad or (worse) my mac, this would have been WAY worse. It's still very embarrassing.
 
 **tl;dr:** Flashed over SWD like always, but plugged the 10-pin Cortex-M connector in mirrored (from the wrong
 side of the PCB). That put GND and 3V3 on the same net, shorted the probe, and let the debugger smoke. For the
@@ -101,8 +101,8 @@ This is what the artifacting looked like on screen:
 
 ![](journal-assets/2026-05-28-random-noise.png)
 
-So what makes a 1bpp OLED show static *and* take the whole board down with it? Claude and I went digging through
-the generated `.config`, and the smoking gun was near the top:
+So what makes a 1bpp OLED show static *and* take the whole board down with it? Claude and I went through the
+generated `.config`, and the problem was near the top:
 
 ```
 CONFIG_LV_COLOR_DEPTH=16
@@ -118,7 +118,7 @@ pixel. Two things fall out of that single mismatch:
    first flush chokes on that — and it chokes *on the system work queue*, which is also where ZMK runs its
    Bluetooth advertising and USB-HID transmits. So the radio never got the chance to come up at all.
 
-Here a display bug is not just a cosmetic problem, but it is a whole "your keyboard is now bricked" type problem,
+This doesn't only result in just a cosmetic problem, but it is a whole "your keyboard is now bricked" type problem,
 because they ride the same queue. Very good.
 
 Pinning the panel to 1bpp in the board's Kconfig is the fix — it's a property of the board, the OLED is soldered on,
@@ -174,26 +174,26 @@ reports its format such that LVGL "white" is actually an *off* pixel and "black"
 inverted-slot colours were backwards. Confirmed in the compiled binary that the theme and both fonts were now
 actually linked in. Built both variants, flashed —
 
-And still static. Still dead.
+And still static and still dead.
 
 At that point I did the thing you do when you're sure and you're still wrong:  I stripped the screen down to the
 absolute minimum:
 create a screen, create one label and set its text, return. 
-In the unlikely case *that* it boots, add pieces back one at a time until it breaks. And this basic screen with a
+In the unlikely case that it boots, add pieces back one at a time until it breaks. And this basic screen with a
 label still hung the board with a config that now matched the working built-in screen on every setting we'd found.
 
 To be honest: I have no debug console wired to this board, so every hypothesis costs a full reflash-and-stare cycle 
-with zero visibility into the actual fault. 
+with zero visibility into the actual fault.
 Because it was already a long session, with a one-label screen still hanging and no obvious next suspect, the right
 move wasn't to keep throwing firmware changes at it. So I reverted to the stock screen, which means I still have a 
 fully working keyboard, and then wrote the entire state up for a Claude Code debugging session with every current
-hypothesis and the config to reproduce it. 
+hypothesis and the config to reproduce it.
 
 **tl;dr:** Brought the OLED up in firmware. The stock ZMK screen showed pure static and took USB + Bluetooth down
 with it, because LVGL defaulted to 16/32-bit colour on a 1-bit panel and because the display shares a work queue
 with the radio. Pinning the panel to 1bpp, giving the display its own work queue and enlarging the draw buffer got
 the stock screen live and the board fully working. My *custom* screen still hardfaults at boot even stripped down
-to a single label, so I parked it with a full writeup and kept the working stock screen.
+to a single label, so I stopped it with a full writeup and kept the working stock screen.
 
 **Time spent this session: 12 hours**
 
@@ -203,9 +203,8 @@ to a single label, so I parked it with a full writeup and kept the working stock
 *Milestone 4 · Claude Code session: "Milestone 4: Custom screen"*
 
 Picking up exactly where the last session died: the moment I flip to my custom status screen, the board hangs at
-boot. Not "the screen looks wrong" — the whole thing goes down. The OLED shows 8-row-page garbage (that's just
-uninitialised display RAM), USB never enumerates, BLE never advertises. And it does this *even with a minimal
-screen body*. That still hangs.
+boot. The OLED shows 8-row-page garbage (that's just uninitialised display RAM), USB never enumerates, BLE never
+advertises. And it does this *even with a minimal screen body*.
 
 What made it so infuriating is that I'd already convinced myself the config was identical between the working
 built-in screen and mine. Same mono theme, same font, same dedicated display work queue. So what's different?
@@ -249,10 +248,9 @@ matter which screen I pick. Rebuilt both variants clean, flashed it.
 
 And the OLED showed my label! The board enumerated over USB, was BLE paired and configurable over ZMK Studio.
 
-After all that, the actual bug was a default value hidden behind an `if` I never thought to look inside. The
-lesson I keep re-learning: when two builds "should be identical", but aren't behaving identically, diff the 
-generated config instead of comparing the config you have written to define your board/or its functionality
-in the toolchain.
+After all that, the actual bug was a default value hidden behind an `if` I never thought to look inside.
+Lesson: When two builds "should be identical", but aren't behaving identically, diff the generated config instead
+of comparing the config you have written to define your board/or its functionality in the toolchain.
 
 **tl;dr:** My custom OLED screen hung the whole board at boot (no USB, no BLE) even with a one-label body. I was
 sure the config matched the working built-in screen — it didn't. Diffing the generated `.config` showed ZMK only
@@ -294,10 +292,11 @@ and `lv_color_black()` for the fill like any sane person would. So why inverted?
 
 It was #2, and it's genuinely counterintuitive. My display's device tree doesn't set `inversion-on`, which means
 the SSD1306 driver reports its format to LVGL as `MONO01`. In that format `lv_color_white()` maps to a pixel
-that's **off**, and `lv_color_black()` maps to one that's **lit**. Backwards from every intuition — but ZMK's mono
-theme is already calibrated around it. So I stopped with my own background and text overrides, and just swapped 
-white<->black inside the box styles where I wanted the inverse of the theme and everything worked:
-Lit rounded outlines for the inactive profiles and a solid lit box with an unlit number for the active profile.
+that's **off**, and `lv_color_black()` maps to one that's **lit**. Backwards from every intuition (what we already
+discussed)— but ZMK's mono theme is already calibrated around it. So I stopped with my own background and text 
+overrides, and just swapped white<->black inside the box styles where I wanted the inverse of the theme and 
+everything worked: Lit rounded outlines for the inactive profiles and a solid lit box with an unlit number for the
+active profile.
 
 Just imagine there's a picture here. I was so locked in that I forgot to take any. Sorry.
 
@@ -308,10 +307,10 @@ completely wrong — profile boxes marching off the right edge, only three of th
 entirely. It clearly hadn't rotated my "rendered screen", but it had just resized the logical canvas and left 
 the pixels where they were...
 
-Digging into the Zephyr/LVGL glue turned up the catch. On this stack `lv_display_set_rotation()` only updates the
+Digging into the Zephyr/LVGL glue confirmed it. On this stack `lv_display_set_rotation()` only updates the
 *logical* resolution — it flips what LVGL thinks the width and height are. But the mono flush callback that
 actually pushes pixels to the panel writes LVGL's coordinates straight through, untransformed. So software
-rotation is effectively a no-op here unless you rotate the buffer yourself.
+rotation is effectively useless here unless you rotate the buffer yourself.
 
 Which is what I ended up doing: a custom flush callback that takes LVGL's 1-bit buffer, walks it bit by bit into
 a small static scratch buffer while rotating each pixel, recomputes the dirty area from the logical portrait
@@ -323,10 +322,6 @@ First rotated flash came up upside down. One more pass to flip the direction —
 mirroring both the pixel mapping and the area math to match — and it landed right way up.
 
 ![](journal-assets/2026-05-30-custom-screen-working.jpeg)
-
-Two of the three headaches this session were things I could only have found by putting it on real hardware and
-staring at it. You can read the SSD1306 datasheet and the LVGL source all day and still not predict that white
-means off and that the rotation call is kind of useless (at least for me).
 
 **tl;dr:** Built out the real OLED screen — battery and a row of profile boxes with the active one inverted. Three
 things: The bigger screen blew past the 4096 LVGL pool too, so I bumped it to 8192; with no `inversion-on` in 
@@ -418,12 +413,11 @@ no matter which way you invert it.
 
 ![](journal-assets/2026-05-31-cs-m4-end-profbox-fixed-layout.jpeg)
 
-Both variants built clean and I flashed it to the actual hardware to check, which mattered here — building only
-proves it compiles, not that a 1-bit panel is going to render it the way I pictured.
+Both variants built clean and I flashed it to the actual hardware to check.
 
 One thing still open at the end: the battery cut-out. Right now the battery icon is filled white with the bolt
 bitmap sitting on it as a black square with a white bolt inside, which is not the punched-through look I wanted.
-That one carries into M6.
+That one carries into M6, when I kind of wrap up the firmware.
 
 **tl;dr:** The battery readout looked fuzzy and bulky and I assumed a black/white polarity bug. It wasn't — it was
 anti-aliasing. The 4bpp Montserrat font (and the FontAwesome battery icons baked into it) gets
@@ -439,7 +433,7 @@ rendered ~1 px thinner than the unselected ones. Battery cut-out still isn't rig
 
 *Milestone 5 · Claude Code session: "Milestone 5: Encoder"*
 
-![](journal-assets/2026-06-07-Knob-Location.jpeg)
+[](journal-assets/2026-06-07-Knob-Location.jpeg)!
 
 This was the session where the implementation of the encoder was finally started. 
 On the board of my macro keyboard I placed an AS5600 magnetic encoder. This is a little chip that reads the 
@@ -543,7 +537,7 @@ above to each mode (every mode has it's own). Volume stays coarse at 14 ticks pe
 ~26°, so a small twist is one step), tabs coarser still at 12, and scroll is fine at 120 per turn (one every 3°) so
 it actually uses the encoder's precision.
 
-![](journal-assets/2026-06-07-Demo-Volume+macOS-acc-in-vscroll.mov)
+[Demo Video of scrolling with default macOS acceleration](journal-assets/2026-06-07-Demo-Volume+macOS-acc-in-vscroll.mov)!
 
 The video still has macOS acceleration doing its thing in the scroll section — this is from before LinearMouse.
 
@@ -632,7 +626,7 @@ the scrolling up and add acceleration, on the firmware side.
 
 That turned out to be optimistic.
 
-![](journal-assets/2026-06-07-Demo-Volume+macOS-acc-in-vscroll.mov)
+[Demo Video of scrolling with default macOS acceleration](journal-assets/2026-06-07-Demo-Volume+macOS-acc-in-vscroll.mov)!
 
 (How it was before.) That's the only "before" video I'm putting in, and there'll be exactly one "after" at the
 end, because scroll feel is genuinely hard to show on video — you can't really *see* smoothness, you have to have
@@ -734,7 +728,7 @@ In short:
 That flipped the firmware's job. It is now very simple: a clean, linear stream of one line per tick, zero acceleration.
 The app owns smoothing, acceleration, and even the little bit of scroll inertia I'd originally planned to add in firmware.
 
-![](journal-assets/2026-06-12-Demo-Scroll-w-Mac-Mouse-Fix.mov)
+[Demo Video of scrolling with Mac Mouse Fix](journal-assets/2026-06-12-Demo-Scroll-w-Mac-Mouse-Fix.mov)!
 
 While I was in there I added an encoder mode I'd wanted for a while: scrolling through browser tabs. Clockwise =
 next tab, counter-clockwise = previous, mapped to Ctrl+Tab / Ctrl+Shift+Tab (works across browsers on macOS).
@@ -770,7 +764,7 @@ tick during sustained scrolling — now down to ≤83/s.
 **Time spent this session: 12 hours**
 
 
-#### June 26: Studio profiles, encoder modes that stick, and a screen rework
+#### June 26: Studio profiles, fixed encoder modes, and a screen rework
 
 *Milestone 6 · Claude Code session: "Milestone 6 + bug fixes"*
 
@@ -788,14 +782,13 @@ for free.
 **Encoder modes that survive a reboot.** Each profile remembers its own encoder mode, but until now that lived
 only in RAM, so a power cycle reset everything to defaults. I wired it up to save into NVS. The first pass used
 ZMK's normal 60-second save debounce, but that felt wrong here — if I change a mode and immediately flip the power
-switch, I want it to have stuck. So it saves immediately instead. Change a mode, kill the power, turn it back on:
-it holds.
+switch, I want it to have stuck. So it saves immediately instead.
 
 **The Studio active-layer thing that isn't a bug.** I'd been bothered that ZMK Studio doesn't highlight which
 profile is currently live on the keyboard. Claude and I went digging through the Studio RPC protocol and the docs
 expecting to find a setting I'd missed — and there just isn't one. The protocol has no "active layer changed"
 message in this version of ZMK; it's simply not a feature. Not something wrong on my end. And the OLED already
-shows the active profile anyway.
+shows the active profile anyway, so it doesn't matter.
 
 **A small power fix.** The magnetic encoder has no interrupt line, so its driver polls the angle over I2C on its
 own thread every 5 ms, forever. That's ~200 CPU wake-ups a second even when nothing's happening, which stops the
@@ -810,10 +803,10 @@ left edge and value on the right — and then the profile column underneath. The
 rounded cell with the profile's actual *name* inverted inside it instead of a number, and the inactive ones are
 squeezed filled bars whose height scales to however many profiles are actually live.
 
-Two things I learned rebuilding it:
+Two more problems with its solutions:
 
-1. LVGL's own rounded corners look like bevelled mush at this size on a 1-bit panel, so I hand-draw every cell
-   into a 1bpp canvas with my own symmetric rounded-rect rasteriser. Crisp corners, full control.
+1. LVGL's own rounded corners are bevels at this size on a 1-bit panel, so I let Claude hand-draw every cell into
+   a 1bpp canvas with my own symmetric rounded-rect rasteriser.
 2. The obvious per-pixel canvas calls each trigger their own invalidate, and doing that per pixel made switching
    profiles visibly lag. Writing straight into the canvas bitmap and firing a single invalidate per update fixed
    it.
