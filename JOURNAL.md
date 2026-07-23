@@ -1,4 +1,9 @@
-# Macro Keyboard — Build Journal
+---
+title: Macro Keyboard
+author: Nikolas Kelava
+description: A custom, wireless Bluetooth LE macro keypad (12 keys + magnetic rotary encoder + OLED) built on an RF52840 module and running ZMK!
+created_at: 2026-05-23 (Start of this devlog)
+---
 
 Devlog for my **Hack Club Horizons** hardware submission: a custom, wireless Bluetooth LE
 macro keypad (12 keys + magnetic rotary encoder + OLED) built on an nRF52840
@@ -1031,7 +1036,8 @@ GND put it back in range and enabled charging. For new keypads, I will just get 
 
 I added and wrote BOMs (yes, plural) to fill some gaps in the repo and make the macro keyboard reproducible.
 
-I noticed, that the shipping instructions for my project specifically ask for a bill of materials (BOM) to enable others to reproduce it. The current version doesn't have one, former ones had.
+I noticed, that the shipping instructions for my project specifically ask for a bill of materials (BOM) to 
+enable others to reproduce it. The current version doesn't have one, former ones had.
 
 Why BOMs? - I landed on a multi-BOM structure (or idk how to call it):
 - One BOM for PCBA under /hardware/PCB/KiCad/Macro-Keyboard-v4/production/bom.csv: After manufacturing the PCB, its populated with the components in this BOM. This step is the PCB assembly. Only the parts for this manufacturing steps are in this BOM. (e.g. nRf module, caps, resistors, usb port, etc.)
@@ -1040,10 +1046,18 @@ The production BOM (for PCBA) captures only the parts for PCBA and the PCB BOM c
 - Master/build cost BOM: This BOM lists all of the on-PCB parts, which couldn't be populated with PCBA, + PCBA + the PCB itself (isn't included in neither PCB BOM or PCBA BOM) + all of the off-PCB parts. (e.g. enclosure + screws, the LiPo battery, bearings, keycaps, etc.)
 This explains the structure. I will put this also in the README.md (probably in shorter form).
 
-Only in the master/build cost BOM I added in the approximate costs for the components. I didn't also add prices to the PCB BOM, because PCBA cost might very, some components might need to be exchanged for other ones, tax and shipping costs can also change. Shipping cost, tax, customs duties are also listed as they are quite substantial.
-In the end of the master BOM I calculated the approximate price per keyboard unit (without labour), which turned out to be about 61,38€. That could have been worse. But it needs to be said: If you somehow decide to build one on your own, you will end up paying more then just the price for one unit, because there are minimum ordere quantities for many components (above of what is needed for one keyboard unit). For example, the PCBs need to be ordered in quantity of 5 or above with JLCPCB.
+Only in the master/build cost BOM I added in the approximate costs for the components. I didn't also add 
+prices to the PCB BOM, because PCBA cost might very, some components might need to be exchanged for other 
+ones, tax and shipping costs can also change. Shipping cost, tax, customs duties are also listed as they 
+are quite substantial.
+In the end of the master BOM I calculated the approximate price per keyboard unit (without labour), which 
+turned out to be about 61,38€. That could have been worse. But it needs to be said: If you somehow decide 
+to build one on your own, you will end up paying more then just the price for one unit, because there are 
+minimum ordere quantities for many components (above of what is needed for one keyboard unit). For example, 
+the PCBs need to be ordered in quantity of 5 or above with JLCPCB.
 
-To the main BOM I also added Notes to clarify in which group the components belong (on-PCB, on-PCB PCBA, off-PCB) beside the vendor.
+To the main BOM I also added Notes to clarify in which group the components belong (on-PCB, on-PCB PCBA, 
+off-PCB) beside the vendor.
 
 ![Picture of cost BOM](assets/journal-assets/2026-07-02-BOM.png)
 Sorry that this is the only pic...
@@ -1051,3 +1065,50 @@ Sorry that this is the only pic...
 **tl;dr:** I added the BOMs, which gave me a good view on the hardware of this project.
 
 **Time spent this session: 3 hours**
+
+
+#### July 23: Starting to write the README.md and did some repo health/prep for shipping
+
+Today is the day where I add a README.md. For doing so, I followed the [README](https://guides.horizons.hackclub.com/guides/readme-guide/)
+and [shipping guide](https://guides.horizons.hackclub.com/guides/shipping-guide/#-hardware) of Hackclub in
+order to make sure, that I forget nothing in the README. Additionally I started prepping up the repo for
+finally shipping this project to Hackclub.
+
+This will be a very short journal entry, because there is nothing special to it.
+
+Firstly repo health:
+Yesterday I needed to fix the demo videos from this journal. I thought that you could embed videos
+(in .mov format) just like pictures in a markdown document and make them playback, when viewing on
+GitHub. Turns out, this doesn't work, because GitHub doesn't support viewing videos in markdowns yet
+as well as PDFs. Therefore I just gave a link to the demo videos and I think it's fine for now.
+In the future, I could convert the videos into GIFs, which can be played back, but this sounds like
+it could cost me more time...
+
+That PDFs can't be viewed either is a good insight, because I was planning to show off my schematic
+in the README.md (as a PDF), and this doesn't work. So I will rasterize them into a .jpeg or so.
+
+Today I moved the journal-assets folder to a new assets folder at root, because I realized that the
+other documents would profit from pictures and other assets as well. And having one assets folder with
+a sub folder for the journal is clean.
+
+Now the README.md:
+This is quite straightforward, but it's still a lot of work. You need to describe your project in 
+enough a way that anyone who isn't familiar with it, but has a basic understanding of computers, 
+especially in the field of microcontrollers, can understand it.
+This is also why I created a dedicated section titled "What is a Macro Keyboard?" before explaining
+what mine actually does. This explains the core concept of macro keyboards quite nice.
+Getting down to the following core functionality of the device was also different and took some effort.
+The use of my language is different too. This journal uses an intentionally informal language, whereas 
+the README uses a more formal writing style.
+
+In case that it is unclear what a bootloader is for the reader, I also incorporated the way they work
+and why I chose a UF2 bootloader for flashing my macro keyboard.
+And some more stuff. But if you read the README, it makes sense and doesn't need to be repeated.
+
+In the end though, this README.md offers a nice overview of the project.
+
+But the README.md is not finished yet. I still need to add all of the pics and pic out a license.
+
+**tl;dr:** Started the README.md + gave the repo some care; the README.md offers a good overview.
+
+**Time spent this session: 3.5 hours**
