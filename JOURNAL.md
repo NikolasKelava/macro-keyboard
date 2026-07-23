@@ -41,9 +41,9 @@ And then it hit me: I'd plugged the connector in from the *other* side of the PC
 I did that because I couldn't reach the other side - and I just didn't think through that this 10 pin connector with
 specific pins is not reversible like a USB port...
 
-![The actual orientation the connector should go in](journal-assets/2026-05-23-pcb-view.png)
+![The actual orientation the connector should go in](assets/journal-assets/2026-05-23-pcb-view.png)
 
-![Schematic with the mismatched nets marked in my handwriting](journal-assets/2026-05-23-withconn.png)
+![Schematic with the mismatched nets marked in my handwriting](assets/journal-assets/2026-05-23-withconn.png)
 
 In the schematic you can see the nets that were *supposed* to line up, and (in my handwriting) the nets that
 actually got connected once the plug was flipped around. Ground and 3V3 ended up on the same net → dead short
@@ -99,7 +99,7 @@ because the bad USB ejection left a couple of macOS processes running.
 
 This is what the artifacting looked like on screen: 
 
-![](journal-assets/2026-05-28-random-noise.png)
+![](assets/journal-assets/2026-05-28-random-noise.png)
 
 So what makes a 1bpp OLED show static *and* take the whole board down with it? Claude and I went through the
 generated `.config`, and the problem was near the top:
@@ -129,7 +129,7 @@ But the noise had *changed*. It was no longer full static, but it was organised 
 tall. The SSD1306 lays its memory out in 8-pixel-tall pages, so the panel was finally receiving structurally valid
 1bpp data. LVGL just wasn't pushing a coherent frame yet. So Progress, not a win.
 
-![](journal-assets/2026-05-28-8pbands.jpeg)
+![](assets/journal-assets/2026-05-28-8pbands.jpeg)
 
 Round two, two changes, both of which just bring my board in line with what the established 128×64 SSD1306 ZMK
 boards already do:
@@ -141,7 +141,7 @@ boards already do:
 Flashed it, and **the stock screen came up.** Connection icon with the paired-device count, active profile,
 battery indicator. USB enumerated, Bluetooth paired, ZMK Studio saw the board. Both changes were needed.
 
-![](journal-assets/2026-05-28-status-screen.png)
+![](assets/journal-assets/2026-05-28-status-screen.png)
 
 **Act 2: my own screen refuses to boot, and I lose (for now).**
 
@@ -321,7 +321,7 @@ callback, and the rotation works.
 First rotated flash came up upside down. One more pass to flip the direction — rotating the other way and
 mirroring both the pixel mapping and the area math to match — and it landed right way up.
 
-![](journal-assets/2026-05-30-custom-screen-working.jpeg)
+![](assets/journal-assets/2026-05-30-custom-screen-working.jpeg)
 
 **tl;dr:** Built out the real OLED screen — battery and a row of profile boxes with the active one inverted. Three
 things: The bigger screen blew past the 4096 LVGL pool too, so I bumped it to 8192; with no `inversion-on` in 
@@ -369,7 +369,7 @@ whether an edge pixel lights up or not is basically a coin flip — which is exa
 "stray pixels outside the glyph" are. On top of that, Montserrat 12 has a 15 px line height, which is why the text
 read as too tall.
 
-![](journal-assets/2026-05-30-custom-screen-working.jpeg)
+![](assets/journal-assets/2026-05-30-custom-screen-working.jpeg)
 
 On the 100% reading in that picture the edge bleeding doesn't look as awful as it does on the other percentages,
 but you can still see how much bolder and thicker the font is compared to the next picture.
@@ -392,7 +392,7 @@ into a second round of changes.
 cut *out* of the fill — like the bolt is punched through it — spanning nearly the full height. So I redrew the
 bolt bigger and inverted the idea: the canvas background is lit and the bolt itself is the OFF pixels.
 
-![](journal-assets/2026-05-31-cs-charging-bolt-font.jpeg)
+![](assets/journal-assets/2026-05-31-cs-charging-bolt-font.jpeg)
 
 Except that's not quite what's in the picture — the battery icon isn't filled there, it's the bolt bitmap overlaid
 on top of it. It looks weird, and I left it that way, because for this session I only wanted to prove I *can* draw
@@ -411,7 +411,7 @@ And it was the *same bug from the start of the session*. The digits were still a
 other way. Same villain, second appearance, same fix: swap the digits to UNSCII 16, a 1bpp font, pixel-identical
 no matter which way you invert it.
 
-![](journal-assets/2026-05-31-cs-m4-end-profbox-fixed-layout.jpeg)
+![](assets/journal-assets/2026-05-31-cs-m4-end-profbox-fixed-layout.jpeg)
 
 Both variants built clean and I flashed it to the actual hardware to check.
 
@@ -433,7 +433,7 @@ rendered ~1 px thinner than the unselected ones. Battery cut-out still isn't rig
 
 *Milestone 5 · Claude Code session: "Milestone 5: Encoder"*
 
-[](journal-assets/2026-06-07-Knob-Location.jpeg)!
+[](assets/journal-assets/2026-06-07-Knob-Location.jpeg)!
 
 This was the session where the implementation of the encoder was finally started. 
 On the board of my macro keyboard I placed an AS5600 magnetic encoder. This is a little chip that reads the 
@@ -537,7 +537,7 @@ above to each mode (every mode has it's own). Volume stays coarse at 14 ticks pe
 ~26°, so a small twist is one step), tabs coarser still at 12, and scroll is fine at 120 per turn (one every 3°) so
 it actually uses the encoder's precision.
 
-[Demo Video of scrolling with default macOS acceleration](journal-assets/2026-06-07-Demo-Volume+macOS-acc-in-vscroll.mov)!
+[Demo Video of scrolling with default macOS acceleration](assets/journal-assets/2026-06-07-Demo-Volume+macOS-acc-in-vscroll.mov)!
 
 The video still has macOS acceleration doing its thing in the scroll section — this is from before LinearMouse.
 
@@ -600,7 +600,7 @@ and both problems vanished together — the screen blanks on idle again, and the
 light smoothing filter on the raw angle too, so the deadband can stay nice and tight without noise creeping back
 in.
 
-![](journal-assets/2026-06-07-Screen-blanked.jpeg)
+![](assets/journal-assets/2026-06-07-Screen-blanked.jpeg)
 
 The lesson I'm taking from this: two bugs that look unrelated are worth staring at together, because sometimes
 "the display won't sleep" and "the thing crashes" are the exact same problem wearing two hats.
@@ -626,7 +626,7 @@ the scrolling up and add acceleration, on the firmware side.
 
 That turned out to be optimistic.
 
-[Demo Video of scrolling with default macOS acceleration](journal-assets/2026-06-07-Demo-Volume+macOS-acc-in-vscroll.mov)!
+[Demo Video of scrolling with default macOS acceleration](assets/journal-assets/2026-06-07-Demo-Volume+macOS-acc-in-vscroll.mov)!
 
 (How it was before.) That's the only "before" video I'm putting in, and there'll be exactly one "after" at the
 end, because scroll feel is genuinely hard to show on video — you can't really *see* smoothness, you have to have
@@ -704,7 +704,7 @@ accordingly. On a trackpad that curve should feel natural. Fed by an encoder and
 slow for a while, then crosses a threshold at a very low speed and *jumps*, and past that it saturates. That's
 the behavior from the first video.
 
-![](journal-assets/2026-06-12-Scan-Plot-macOS-scroll-acc.jpeg)
+![](assets/journal-assets/2026-06-12-Scan-Plot-macOS-scroll-acc.jpeg)
 
 And that's why the firmware can't win. Acceleration in firmware means multiplying the magnitude — but macOS then
 accelerates my already-accelerated magnitude, so I'd be stacking one curve on top of another curve I can't see or
@@ -728,7 +728,7 @@ In short:
 That flipped the firmware's job. It is now very simple: a clean, linear stream of one line per tick, zero acceleration.
 The app owns smoothing, acceleration, and even the little bit of scroll inertia I'd originally planned to add in firmware.
 
-[Demo Video of scrolling with Mac Mouse Fix](journal-assets/2026-06-12-Demo-Scroll-w-Mac-Mouse-Fix.mov)!
+[Demo Video of scrolling with Mac Mouse Fix](assets/journal-assets/2026-06-12-Demo-Scroll-w-Mac-Mouse-Fix.mov)!
 
 While I was in there I added an encoder mode I'd wanted for a while: scrolling through browser tabs. Clockwise =
 next tab, counter-clockwise = previous, mapped to Ctrl+Tab / Ctrl+Shift+Tab (works across browsers on macOS).
@@ -818,19 +818,19 @@ rather than the raw pointer. (This one comes back to bite me later.)
 
 Then two layout bugs that took a couple of iterations to get right:
 
-![](journal-assets/2026-06-26-Screen-iteration-1.jpeg)
+![](assets/journal-assets/2026-06-26-Screen-iteration-1.jpeg)
 
 Round-off working, but inconsistent as soon as the profile count changed — I'd tied the corner radius to the cell
 height, so at any count other than 5 the round-off went either too sharp or weirdly blobby.
 
-![](journal-assets/2026-06-26-Screen-iteration-2.jpeg)
+![](assets/journal-assets/2026-06-26-Screen-iteration-2.jpeg)
 
 Better, but the radius still differed depending on whether a cell belonged to the selected profile or not. Fixed by
 giving every cell one fixed radius, always. The other bug: with only 2 profiles the single inactive cell ballooned
 to fill the entire column, because I was stretching everything down to the bottom edge. Now the inactive cells cap
 at 10 px and just leave empty space below.
 
-![](journal-assets/2026-06-30-Final-screen.jpeg)
+![](assets/journal-assets/2026-06-30-Final-screen.jpeg)
 
 Final layout, consistent across every profile count.
 
@@ -887,7 +887,7 @@ into a chunk of RAM that survives a reboot, and the boot-up screen prints it to 
 LiPo keeps that RAM alive even across a USB unplug, so the procedure is: plug in USB, let it crash-loop, unplug
 USB, and the board boots on battery and shows me the last fault it hit. A tiny black-box recorder.
 
-![](journal-assets/2026-06-30-Screen-FLT-fault-1.jpeg)
+![](assets/journal-assets/2026-06-30-Screen-FLT-fault-1.jpeg)
 
 First capture: `FLT display queue r26 pc00059ec4`.
 
@@ -904,7 +904,7 @@ There's a fix for that: you can disable the Cortex-M write buffer with a single 
 forces bus faults to be *precise* — reported on the exact instruction that did the bad write. So I flipped that
 bit and captured again.
 
-![](journal-assets/2026-06-30-Screen-FLT-fault-2.jpeg)
+![](assets/journal-assets/2026-06-30-Screen-FLT-fault-2.jpeg)
 
 Second capture: `FLT display queue r19 pc00066676`.
 
@@ -924,7 +924,7 @@ So the fix was to make the charging graphic behave like the profile column: one 
 battery interior, sitting directly on the screen, with the plain fill hidden while it's showing. Same lightning
 bolt, drawn a safe way — which also finally closes out the battery cut-out I'd left looking wrong back in M4.
 
-![](journal-assets/2026-06-30-Final-screen-w-chrg.jpeg)
+![](assets/journal-assets/2026-06-30-Final-screen-w-chrg.jpeg)
 
 Then the cleanup pass: ripped out all the diagnostic scaffolding (the on-screen fault capture, the precise-fault
 register hack, the thread naming) and reverted the three stack bumps that turned out to be red herrings. I kept
@@ -966,18 +966,18 @@ I was able to eliminate both cause #1 and #2 by measuring if the voltage of the 
 supplying the charging IC. And it did not, this means the cap of the LiPo also stayed the same.
 So it must be #3.
 
-![](journal-assets/2026-07-01-LiPo-Voltage.jpeg)
+![](assets/journal-assets/2026-07-01-LiPo-Voltage.jpeg)
 
 Because the ICs are usually fine, I looked into the schematic of the keyboard to see if I messed up something
 there:
 
-![](journal-assets/2026-07-01-Schematic-Charging-IC.png)
+![](assets/journal-assets/2026-07-01-Schematic-Charging-IC.png)
 
 So I used the exact same IC before and it worked flawlessly. The only thing that I changed was that I made
 use of the temperature sense terminal.
 I looked into the datasheet of the IC and what could cause the charging IC to be disabled:
 
-![](journal-assets/2026-07-01-Datasheet-Charging-IC.png) 
+![](assets/journal-assets/2026-07-01-Datasheet-Charging-IC.png) 
 
 The TS (temperature-sense) is the BQ24040's veto over charging. When the NTCs resistance (changes
 resistance with temperature of the bat pack) is not in the range that the BQ24040 likes, the battery is 
@@ -988,7 +988,7 @@ sits around 0.5 V, dead center of the charge window. My 237 kΩ slams that node 
 past the ~1.6 V "thermistor removed / freezing" threshold, so the IC decided
 the battery was impossibly cold (or absent) and quietly disabled charging.
 
-![Multimeter reading ~237 kΩ from the TS pin to GND — the smoking gun](journal-assets/2026-07-01-TS-239.jpeg)
+![Multimeter reading ~237 kΩ from the TS pin to GND — the smoking gun](assets/journal-assets/2026-07-01-TS-239.jpeg)
 
 R6 is 240 k and it's supposed to sit in *parallel* with the pack's 10 k NTC → 10k ∥ 250k ≈ 9.6 kΩ.
 If the NTC were actually in the circuit I could never measure *above* 10 k. Reading 237 k meant
@@ -1011,13 +1011,13 @@ so I took the datasheet's sanctioned shortcut: a fixed 10 kΩ from TS to GND to 
 normal window. In parallel with R6 that's ~9.6 kΩ → ~0.48 V on TS → charging
 enabled.
 
-![The 10 kΩ resistor tacked in from TS to GND](journal-assets/2026-07-01-ts-fix-10k.jpeg)
+![The 10 kΩ resistor tacked in from TS to GND](assets/journal-assets/2026-07-01-ts-fix-10k.jpeg)
 
 Plugged in USB and the charge status finally went active — the pack is pulling
 current for the first time.
 
-![Not charged](journal-assets/2026-07-01-noncharg.jpeg)
-![Charge status showing the pack actually charging - after a few minutes](journal-assets/2026-07-01-charg.jpeg)
+![Not charged](assets/journal-assets/2026-07-01-noncharg.jpeg)
+![Charge status showing the pack actually charging - after a few minutes](assets/journal-assets/2026-07-01-charg.jpeg)
 
 **tl;dr:** LiPo wouldn't charge because the BQ24040's TS pin saw 237 kΩ (the
 NTC was never in-circuit) and disabled charging. A 10 kΩ from TS to
@@ -1045,7 +1045,7 @@ In the end of the master BOM I calculated the approximate price per keyboard uni
 
 To the main BOM I also added Notes to clarify in which group the components belong (on-PCB, on-PCB PCBA, off-PCB) beside the vendor.
 
-![Picture of cost BOM](journal-assets/2026-07-02-BOM.png)
+![Picture of cost BOM](assets/journal-assets/2026-07-02-BOM.png)
 Sorry that this is the only pic...
 
 **tl;dr:** I added the BOMs, which gave me a good view on the hardware of this project.
