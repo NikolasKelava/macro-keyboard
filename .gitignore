@@ -9,6 +9,7 @@
 /development
 /hardware/CASE/blender
 SHIP_CHECKLIST.md
+/hardware/PCB/KiCad/Macro-Keyboard-v4/DevKitTell.kicad_pcb # KiCanvas
 
 # Build-Artefakte
 firmware/build/*.uf2

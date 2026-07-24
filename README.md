@@ -9,7 +9,7 @@ scroll / browser tabs). Battery-powered (2000 mAh LiPo) with USB-C charging.
 This project was submitted to the **Hack Club Horizons** program. Its progress is logged
 in [JOURNAL.md](./JOURNAL.md). The admission is still pending.
 
-![Macro Keyboard](journal-assets/hero.jpg)
+![Macro Keyboard](assets/hero.jpg)
 
 ---
 
@@ -17,38 +17,45 @@ in [JOURNAL.md](./JOURNAL.md). The admission is still pending.
 
 A macro keyboard is a **Human Interface Device** (HID), which executes **macros** on a connected
 host computer. In this sense, it functions like a conventional keyboard, serving as the 
-interface between human input and a computer action. 
+interface between human input and a computer action.
+
 The difference between a standard keyboard and a macro keyboard lies in their respective 
 functionalities. A standard keyboard performs "normal" key bindings (e.g., numbers, letters,
 and function buttons), while a macro keyboard performs macros. These can be media keys 
 (e.g., volume up/down, skip title), open applications on the host computer or executing 
 entire commands, performing actions that would otherwise require **multiple keystrokes on a 
 standard keyboard**.
+
 This makes it easier to navigate the operating system by **removing friction** between the user
 and the host.
 
 ## What is my macro keyboard and what does it do?
 
-** My macro keyboard has 12 macro keys, a rotary magnetic encoder, an OLED display, is battery 
-powered and supports up to 7 profiles. **
+**My macro keyboard has 12 macro keys, a rotary magnetic encoder, an OLED display, is battery 
+powered and supports up to 7 profiles.**
 
 The **macro assigned to each key** can be configured **per profile**. Depending on which profile is 
 active, a key can have up to seven different functions. Consequently, we can perform up to **84
 different actions** with our 12 keys.
+
 The **encoder mode** can also be configured. It can act as a **scroll wheel** in both vertical and
 horizontal direction, control the **volume** or switch between browser tabs on the host. These **modes 
 are bound to each profile** and can be changed by assigning a key on a profile, that cycles through 
 the modes of the encoder. When moving to the next keypad profile, the encoder mode changes to the 
 active profile's encoder mode. Returning to the previous profile will revert the encoder mode to its 
 previous state.
+
 The **OLED display** shows the selected keypad profile, the battery capacity, the connection mode, and 
 the encoder mode.
+
 You can think of the keypad profiles as the **user layer** of the macro keypad. These profiles are 
-called keymaps, and they are the layers where the macro keyboard's functionality is configured. 
+called the "keymap", and they are the layers where the macro keyboard's functionality is configured. 
 This user layer live directly on the macro keyboard, so the macros stay **the same even when changing 
 host devices.** A **profile** button on the macro keyboard is used to switch between profiles.
-You can **configure** the keymaps and layers in real time without recompiling or reflashing the keypad 
+
+You can **configure** the keymap and profiles in real time without recompiling or reflashing the keypad 
 through [**ZMK Studio**](https://zmk.studio), a graphical user interface for ZMK keyboard firmware.
+
 The macro keyboard connects as a keypad **via Bluetooth** or **USB**. Hosts are cross-platform (Windows, 
 macOS, Linux, and iOS). The keypad can be paired with up to five hosts and conveniently switch 
 between them via assigned keys on the keymap.
@@ -79,6 +86,8 @@ between them via assigned keys on the keymap.
 The macro keyboard runs custom ZMK Firmware, configured and built over a local toolchain.
 > "ZMK Firmware is an open source (MIT) keyboard firmware built on the Zephyr™ Project Real Time Operating System (RTOS)." ([Introduction to ZMK](https://zmk.dev/docs))
 
+Full toolchain and architecture notes are in [firmware/CLAUDE.md](./firmware/CLAUDE.md).
+
 ## Repository layout
 
 ```
@@ -89,13 +98,14 @@ macro_keyboard/
 ├── firmware/
 │   ├── CLAUDE.md               full firmware architecture & build notes
 │   ├── IMPLEMENTATION_PLAN.md  milestone-by-milestone history
-│   ├── zmk-config/             ZMK config: custom board files, module, AS5600 driver, behaviors
+│   ├── zmk-config/             ZMK config: custom board files, module, 
+│   │                           AS5600 driver, behaviors
 │   └── zmk                     ZMK submodule (ZMK version for my toolchain)
 └── hardware/
     ├── BOM.csv          build BOM
     ├── BOM_PCB.csv      per-component board BOM (JLCPCB SMT + hand-soldered)
     ├── BUILD.md         full build and assembly guide to reproduce the macro keyboard
-    ├── PCB/KiCad/Macro-Keyboard-v4/   schematic, board, Gerbers, KiCad design files for 4th iteration of the PCB
+    ├── PCB/KiCad/Macro-Keyboard-v4/   schematic, board, Gerbers, KiCad design files
     └── CASE/                          3D-printed enclosure (Fusion + mesh exports)
 ```
 
@@ -128,7 +138,7 @@ cost more than the per-unit cost alone.
 - **Gerbers / fab package:** [production/Macro-Keyboard-v4.zip](./hardware/PCB/KiCad/Macro-Keyboard-v4/production/)
 - **Case:** [hardware/CASE/](./hardware/CASE/) — designed in Autodesk Fusion + the nets exported for 3D printing
 
-[![View in KiCanvas](https://img.shields.io/badge/View%20in-KiCanvas-blue)](https://kicanvas.org/?github=https://github.com/NikolasKelava/macro-keyboard)
+[![View in KiCanvas](https://img.shields.io/badge/View%20in-KiCanvas-blue)](https://kicanvas.org/?github=https://github.com/NikolasKelava/macro-keyboard/tree/main/hardware/PCB/KiCad/Macro-Keyboard-v4)
 
 ## Pinout
 
@@ -149,9 +159,7 @@ In short (especially for reproducing the macro keyboard):
 
 **Flashing:** I installed a Adafruit nRF52 bootloader on my board. With this bootloader I
 can use UF2 drag and drop to flash the firmware by just double-tapping the reset button,
-which mounts the keypad as a USB drive (`NRF52BOOT`), and then dragging `zmk.uf2` onto it
-- the build format for UF2 bootloaders. The board reflashes and reboots into the new
-firmware.
+which mounts the keypad as a USB drive (`NRF52BOOT`), and then dragging `zmk.uf2` onto it - the build format for UF2 bootloaders. The board reflashes and reboots into the new firmware.
 
 By default my pipeline will give both .hex and .uf2 build artifacts (that contain the
 firmware) for flashing the macro keyboard. Flashing the .hex artifact over SWD with a 
