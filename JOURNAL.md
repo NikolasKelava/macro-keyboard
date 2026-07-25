@@ -1274,3 +1274,16 @@ There is much more to it and writing everything down and explaining it, would ta
 **tl;dr:** I added the build guide and made my way through the entire repository for all the different paths a user could take, which made me change more than just the build guide.
 
 **Time spent this session: 6 hours**
+
+
+#### July 26: Adding photos of the keypad + CAD exports + demo video
+
+It is still the same night, but now the 26th.
+
+1. I exported the meshed from Fusion + its source to hardware/CASE.
+2. Took some more photos of the finished product and put them in the README.md
+3. Captured a quick demo video of the functionality of the macro keyboard and uploaded it to youtube
+
+**tl;dr:** Go to sleep.
+
+**Time spent this session: 1.5 hours**
