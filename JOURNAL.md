@@ -1170,8 +1170,8 @@ Then I marked the important periphere with text and exported this pic:
 3. For KiCanvas I needed to change the address to the path of my KiCad project root in order for KiCanvas to
 find the PCB and schematic.
 
-![Macro Keyboard layout](assets/2026-07-25-KiCanvas-badge.png)
-![Macro Keyboard layout](assets/2026-07-25-KiCanvas-view.png)
+![Macro Keyboard layout](assets/journal-assets/2026-07-25-KiCanvas-badge.png)
+![Macro Keyboard layout](assets/journal-assets/2026-07-25-KiCanvas-view.png)
 
 4. Lastly I changed some formatting in the README.
 
