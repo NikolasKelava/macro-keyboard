@@ -66,7 +66,7 @@ between them via assigned keys on the keymap.
 
 ## Demo & photos
 
-###Demo video:
+### Demo video:
 
 [Quick demo video on youtube](https://youtube.com/shorts/6OSJ7Yoke_U)
  
