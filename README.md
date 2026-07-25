@@ -136,8 +136,9 @@ cost more than the per-unit cost alone.
 
 - **Schematic (PDF):** [Macro-Keyboard-v4.pdf](./hardware/PCB/KiCad/Macro-Keyboard-v4/Macro-Keyboard-v4.pdf)
 - **KiCad source:** [hardware/PCB/KiCad/Macro-Keyboard-v4/](./hardware/PCB/KiCad/Macro-Keyboard-v4/)
-- **Gerbers / fab package:** [production/Macro-Keyboard-v4.zip](./hardware/PCB/KiCad/Macro-Keyboard-v4/production/)
-- **Case:** [hardware/CASE/](./hardware/CASE/) — designed in Autodesk Fusion + the nets exported for 3D printing
+- **Gerbers:** [production/Macro-Keyboard-v4.zip](./hardware/PCB/KiCad/Macro-Keyboard-v4/production/Macro-Keyboard-v4.zip)
+- **SMT Assembly:** [`bom.csv` + `positions.csv`](./hardware/PCB/KiCad/Macro-Keyboard-v4/production/)
+- **Case:** [hardware/CASE/](./hardware/CASE/) — Fusion source + the meshes exported for 3D printing
 
 [![View in KiCanvas](https://img.shields.io/badge/View%20in-KiCanvas-blue)](https://kicanvas.org/?github=https://github.com/NikolasKelava/macro-keyboard/tree/main/hardware/PCB/KiCad/Macro-Keyboard-v4)
 
@@ -194,7 +195,7 @@ west build -p -d build/macro_keyboard/m3 -b macro_keyboard -- \
 Add `-S studio-rpc-usb-uart -DCONFIG_ZMK_STUDIO=y` for the ZMK Studio variant.
 The build emits both `zmk.uf2` (drag-drop) and `zmk.hex` (SWD via `west flash -r pyocd`).
 
-Before doing so: Follow the official [ZMK firmware document](https://zmk.dev/docs/development/local-toolchain/setup) on setting up the local Zephyr toolchain to build the ZMK firmware with macro_keyboard config. Install the current version of ZMK, which is added as a submodule to this repo. Install under the path 'firmware/zmk_toolchain/'.
+Before doing so: Follow the official [ZMK firmware document](https://zmk.dev/docs/development/local-toolchain/setup) on setting up the local Zephyr toolchain to build the ZMK firmware with macro_keyboard config. Install the current version of ZMK, which is added as a submodule to this repo. Install under the path `firmware/zmk_toolchain/`.
 
 ## Steps to reproduce
 

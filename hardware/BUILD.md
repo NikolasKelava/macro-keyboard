@@ -72,11 +72,11 @@ For the whole enclosure and knob there are no supports need, but I would recomme
 at the place in the attached picture.
 
 Place supports, where the print is colored dark blue:
-![](assets/build-assets/2026-07-25-Print-Support-Placement.png)
+![](../assets/build-assets/2026-07-25-Print-Support-Placement.png)
 This is how it looks sliced:
-![](assets/build-assets/2026-07-25-Print-Support-Sliced.png)
+![](../assets/build-assets/2026-07-25-Print-Support-Sliced.png)
 This is how the part looks after the supports are removed:
-![](assets/build-assets/2026-07-25-Print-Support-IRL.jpeg)
+![](../assets/build-assets/2026-07-25-Print-Support-IRL.jpeg)
 
 Now Print the enclosure + knob + keycaps!
 
@@ -88,20 +88,20 @@ All of the components are under the [BOM.csv](./BOM.csv). Make sure you have the
 Before you can assemble the macro keyboard you need to
 - install 4 threaded inserts into the TOP enclosure part.
 
-![](assets/build-assets/2026-07-25-Inserts-Location.jpeg)
+![](../assets/build-assets/2026-07-25-Inserts-Location.jpeg)
 - put the magnet into the slot of the knob + add the bearing.
 
-![](assets/build-assets/2026-07-25-Knob.jpeg)
-![](assets/build-assets/2026-07-25-Knob-side.jpeg)
+![](../assets/build-assets/2026-07-25-Knob.jpeg)
+![](../assets/build-assets/2026-07-25-Knob-side.jpeg)
 - install double sided tape on the battery cover.
 
-![](assets/build-assets/2026-07-25-bat-cover.jpeg)
+![](../assets/build-assets/2026-07-25-bat-cover.jpeg)
 - install double sided tape in the BOTTOM of the enclosure and put the battery in.
 
-![](assets/build-assets/2026-07-25-bat.jpeg)
+![](../assets/build-assets/2026-07-25-bat.jpeg)
 
 Now you have all of these parts in front of you:
-![](assets/build-assets/2026-07-25-Overview.jpeg)
+![](../assets/build-assets/2026-07-25-Overview.jpeg)
 (I already put the key switches and OLED display in place.)
 
 ### Hand soldering the remaining parts:
@@ -111,11 +111,11 @@ key switches, JST battery connector, SWD header, OLED module
 Secure the SwitchPlate with 4 M2 nuts and make sure the Plate is aligned.
 Then just pop in the Switches and solder them on from the backside of the PCB:
 
-![](assets/build-assets/2026-07-25-Switch-Soldering.jpeg)
+![](../assets/build-assets/2026-07-25-Switch-Soldering.jpeg)
 
 Put on the TOP of the enclosure and make sure the OLED is aligned: (When putting on the TOP, make sure to watch the power switch.)
 
-![](assets/build-assets/2026-07-25-OLED-Alignment.jpeg)
+![](../assets/build-assets/2026-07-25-OLED-Alignment.jpeg)
 
 Solder the OLED.
 
@@ -125,7 +125,7 @@ the blueprint in the PCB design! So what you will do is: Rotate the pins on the 
 so when putting in the connector, it faces the right way into the PCB!!! (If you don't the polarity doesn't match
 and you will notice it even before you get a short, because the connector would face outside of the PCB.)
 
-![](assets/build-assets/2026-07-25-JST.jpeg)
+![](../assets/build-assets/2026-07-25-JST.jpeg)
 
 This is what it should look like.
 
@@ -139,36 +139,36 @@ If I haven't removed this block, you will need to read the corresponding JOURNAL
 
 Put on the battery cover like so:
 
-![](assets/build-assets/2026-07-25-bat-cover-on.jpeg)
+![](../assets/build-assets/2026-07-25-bat-cover-on.jpeg)
 
 Then connect the battery to the JST connector:
 
-![](assets/build-assets/2026-07-25-JST.jpeg)
+![](../assets/build-assets/2026-07-25-JST.jpeg)
 
 Then align the two halves of the enclosure as followed:
 
-![](assets/build-assets/2026-07-25-2halves.jpeg)
+![](../assets/build-assets/2026-07-25-2halves.jpeg)
 
 Tighten down all 4 screws alternating:
 
-![](assets/build-assets/2026-07-25-screwing.jpeg)
+![](../assets/build-assets/2026-07-25-screwing.jpeg)
 
 Then you will be left with this:
 
-![](assets/build-assets/2026-07-25-base-wo-caps.jpeg)
+![](../assets/build-assets/2026-07-25-base-wo-caps.jpeg)
 
 Put on the keycaps:
 
-![](assets/build-assets/2026-07-25-keycaps.jpeg)
+![](../assets/build-assets/2026-07-25-keycaps.jpeg)
 
 Press the knob into the enclosure and make sure the knob spins freely.
 
-![](assets/build-assets/2026-07-25-knob-1.jpeg)
-![](assets/build-assets/2026-07-25-knob-2.jpeg)
+![](../assets/build-assets/2026-07-25-knob-1.jpeg)
+![](../assets/build-assets/2026-07-25-knob-2.jpeg)
 
 ### Assembled:
 
-![](assets/build-assets/2026-07-25-assembled.jpeg)
+![](../assets/build-assets/2026-07-25-assembled.jpeg)
 
 ## 5. Flash the firmware
 
@@ -186,7 +186,7 @@ Press the knob into the enclosure and make sure the knob spins freely.
 - I would recommend to install the UF2 bootloader as it will make your life easier later. If you ever need to update the firmware on the board later, you won't need to flash over SWD again.
   If you don't want to install a bootloader and want to flash the firmware directly with your debugger, read the section in [firmware/CLAUDE.md → Bootloader](../firmware/CLAUDE.md) "If the bootloader has to be removed".
 
-- Follow the official [ZMK firmware document](https://zmk.dev/docs/development/local-toolchain/setup) on setting up the local Zephyr toolchain to build the ZMK firmware with macro_keyboard config. Install the current version of ZMK, which is added as a submodule to this repo. Install under the path 'firmware/zmk_toolchain/'.
+- Follow the official [ZMK firmware document](https://zmk.dev/docs/development/local-toolchain/setup) on setting up the local Zephyr toolchain to build the ZMK firmware with macro_keyboard config. Install the current version of ZMK, which is added as a submodule to this repo. Install under the path `firmware/zmk_toolchain/`.
 
 ### 1. **First-time bootloader install** (SWD/DAPLink with pyocd):
 (also in [firmware/CLAUDE.md → Bootloader](../firmware/CLAUDE.md).)
