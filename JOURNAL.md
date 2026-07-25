@@ -1250,3 +1250,27 @@ conventions with the license structure in the README (MIT as root and CERN as ov
 subpath).
 
 **Time spent this session: 3 hours**
+
+
+#### July 25: Adding the build guide
+
+There is nothing special to it. There's no point in repeating what's already written there.
+So I'll just add a few things I paid attention to:
+1. I had to go through the entire process once—from ordering the PCB to verifying that everything works (+ add some nice pics along the way), which was time consuming, but gave me once again a nice overview on what producing the macro keyboard actually involves. (because the build guide rounds up nicely and pulls the whole repo togther). The overview comes from the round up, not by being high level and lacking detail (the guide doesn't lack important details).
+2. I noticed some mistakes in other documents:
+   - for example: The BOM_PCB.csv didn't mark the DNP components
+   - or that I gave the bootloader a wrong attribute ("nice_nano" instead of the "MDBT50Q-1MV2") in the CLAUDE.md, so I changed that as well: Bootloader was right, but I said it belonged to a different board instead of exactly my MCU
+3. In the README.md I forgot to declare that the local toolchain would need to be installed in order to build the firmware.
+4. I came on the idea to just add build artifacts to the repo, so Users don't need to install a local toolchain. (only if they want to modify the firmware)
+5. I also needed to explain why the bootloader is optional, what to do if you don't want to use one, and that the debugger was irrelevant and the two different versions of the firmware and what to do at each step, if one is chosen. 
+6. Or the macOS scroll acceleration and what to do.
+
+Just think every possible path through!
+
+And then these are the mistakes you notice when you think through the users perspective and go though everything one by one.
+
+There is much more to it and writing everything down and explaining it, would take a while, so this will do...
+
+**tl;dr:** I added the build guide and made my way through the entire repository for all the different paths a user could take, which made me change more than just the build guide.
+
+**Time spent this session: 6 hours**

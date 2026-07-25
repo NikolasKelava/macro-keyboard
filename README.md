@@ -117,8 +117,9 @@ macro_keyboard/
   magnet/knob, battery, keycaps, enclosure, screws) with the approximated cost per element.
   -> in the end: what it cost to build one unit of my macro keypad.
 - **[hardware/BOM_PCB.csv](./hardware/BOM_PCB.csv)** — **PCB BOM**:
-  every component that physically sits on the board, incl. the OLED and key switches, which 
-  I hand solder.
+  every component that physically sits on the board; some of the parts, that need to be soldered
+  onto the PCB, can't be soldered in the PCBA step, usually because those parts are to big. So I
+  solder those manually. (e.g. key switches, OLED display, JST connector for LiPo)
 - **[production/bom.csv](./hardware/PCB/KiCad/Macro-Keyboard-v4/production/bom.csv)** — **PCBA BOM**: 
   After manufacturing the PCB, its populated with the components in this BOM. 
   This step is the PCB assembly. Only the parts for this manufacturing step are in this 
@@ -177,6 +178,8 @@ However, the defined offset for the bootloader will be applied to all artifacts 
 building the firmware. If no bootloader is installed on your macro keyboard and you flash 
 via SWD, there won't be a bootloader to point to your firmware and boot it.
 
+If you don't want to install a bootloader and want to flash the firmware directly with 
+your debugger, read the section in [firmware/CLAUDE.md → Bootloader](../firmware/CLAUDE.md) "If the bootloader has to be removed".
 
 **Build (from `firmware/zmk_toolchain/app`, ZMK toolchain):**
 
@@ -191,21 +194,11 @@ west build -p -d build/macro_keyboard/m3 -b macro_keyboard -- \
 Add `-S studio-rpc-usb-uart -DCONFIG_ZMK_STUDIO=y` for the ZMK Studio variant.
 The build emits both `zmk.uf2` (drag-drop) and `zmk.hex` (SWD via `west flash -r pyocd`).
 
+Before doing so: Follow the official [ZMK firmware document](https://zmk.dev/docs/development/local-toolchain/setup) on setting up the local Zephyr toolchain to build the ZMK firmware with macro_keyboard config. Install the current version of ZMK, which is added as a submodule to this repo. Install under the path 'firmware/zmk_toolchain/'.
+
 ## Steps to reproduce
 
-Full instructions: **[hardware/BUILD.md](./hardware/BUILD.md)**. In short:
-
-1. **Order the PCB** — send the Gerbers ([production/](./hardware/PCB/KiCad/Macro-Keyboard-v4/production/)) 
-to JLCPCB (or any other pcb manufacturer of your liking) and have the LCSC-SMT parts from 
-[BOM_PCB.csv](./hardware/BOM_PCB.csv) assembled /or populated the board.
-2. **Source the rest of the parts** — [BOM.csv](./hardware/BOM.csv): switches, OLED, encoder magnet + bearing, battery, 3D print case.
-3. **Hand-solder** the non-SMT parts onto the PCB, **print the case**, fit the encoder bearing first,
-then magnet into the knob.
-4. **Assemble all of the parts** - basically putting the enclosure parts, bearing, wheel for encoder
-together with screws.
-5. **Install the bootloader** (first time, SWD) - I have provided a bootloader as well
-6. Then **flash ZMK** - `zmk.uf2` (via UF2 drag-drop).
-7. **Verify** per [BUILD.md -> Verify](./hardware/BUILD.md#7-verify).
+Full instructions: **[hardware/BUILD.md](./hardware/BUILD.md)**.
 
 ## Safety notes
 

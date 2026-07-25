@@ -119,7 +119,7 @@ Default workflow is UF2 drag-drop (Adafruit nRF52 bootloader installed). The bui
 **UF2 (default — fast iteration):**
 
 1. Double-tap the reset signal on the board. The device mounts as a USB MSC drive (~"NRF52BOOT").
-2. Drag-drop `build/macro_keyboard/m3/zephyr/zmk.uf2` onto that drive. The bootloader writes the app, ejects, and resets into firmware.
+2. Drag-drop `build/macro_keyboard/m6_studio/zephyr/zmk.uf2` onto that drive. The bootloader writes the app, ejects, and resets into firmware.
 
 **SWD via pyocd** (only when the bootloader is misbehaving, or for first bootloader install / re-install):
 
@@ -131,7 +131,7 @@ pyocd will flash `zmk.hex` directly to 0x26000 — bootloader area (0x0..0x25FFF
 
 ## Bootloader
 
-A UF2 bootloader (Adafruit_nRF52_Bootloader, `nice_nano_v2` build — same SoC family as the MDBT50Q-1MV2 module, no external QSPI) is the default flashing target. The binary lives at `firmware/bootloader/macro_keyboard_bootloader.hex`.
+A UF2 bootloader (Adafruit_nRF52_Bootloader, MDBT50Q-1MV2 module) is the default flashing target. The binary lives at `firmware/bootloader/macro_keyboard_bootloader.hex`.
 
 The build is wired for it by default — see `macro_keyboard_defconfig`:
 
