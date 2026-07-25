@@ -66,9 +66,19 @@ between them via assigned keys on the keymap.
 
 ## Demo & photos
 
-- **Demo video:** <!-- TODO: youtube video, that demonstrates  the functionality of the board --> 
-- **Photos:** <!-- TODO: more photos -->
+###Demo video:
 
+
+ 
+### Photos: 
+
+![Macro Keyboard](assets/photos/photo_1.jpeg)
+![Macro Keyboard](assets/photos/photo_2.jpeg)
+![Macro Keyboard](assets/photos/photo_3.jpeg)
+![Macro Keyboard](assets/photos/photo_4.jpeg)
+![Macro Keyboard](assets/photos/photo_5.jpeg)
+![Macro Keyboard](assets/photos/photo_6.jpeg)
+![Macro Keyboard](assets/photos/photo_7.jpeg)
 
 ## Hardware overview
 
