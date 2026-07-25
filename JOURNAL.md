@@ -1112,3 +1112,141 @@ But the README.md is not finished yet. I still need to add all of the pics and p
 **tl;dr:** Started the README.md + gave the repo some care; the README.md offers a good overview.
 
 **Time spent this session: 3.5 hours**
+
+
+#### July 25: Adding the Hero + layout shot to the README.md, fixing KiCanvas + formatting
+
+Starting with the photos: Today I created the Hero and Layout shot of my macro keyboard.
+
+1. For the Hero shot I used a white back ground and placed the background and my keyboard in front
+of my window in order to light the scene evenly. I would have liked to use my phone to capture the
+image, but I couldn't due to not having enough control over the iso, aperture  and shutter speed.
+Because the scene was lit brightly and a lot of light hit the sensor of my phone camera, the shutter
+speed was increased. (Or the time, that light hits the sensor, was decreased).
+This is problem, because this is what the display looks like up close:
+
+![](assets/journal-assets/2026-07-25-OLED-BFI.jpeg)
+
+I knew this effect from an LTT video about nvidias pulsar technique on LCD monitors to decrease motion blur.
+Quick google search, to explain it correctly:
+This is **Backlight Strobing** or **Black Frame Insertion** (BFI)
+> How it works: Instead of leaving the backlight or pixels on continuously (sample-and-hold), the display 
+> briefly turns off the light or inserts a black frame between each real frame. This cuts down how long an 
+> image stays visible on your retina, stopping the smear effect as your eyes track movement.
+
+But the reason, why my OLED also inserts black bars, is probably that this is also the way, in which brightness
+is controlled. (like over PWM) - Inserting black bars, between frames, is probably easier than dimming
+the brightness of individual pixels... considering that the OLED is driven over I2C with limited bandwidth
+and full array dimming mean that instead pushing a buffer with 1bpp it would require n/2 many bits per pixel
+for n many brightness levels.
+
+This also means, that I wont be able to change it (probably), only if I run the OLED at full eye-blinding brightness.
+
+Sorry for nerding out about this. It is ok, if the time I spent on this work session, is not account for.
+And it might not all be correct. I am speculating.
+
+This effect is not visible by a human eye, because our eyes are exposed to light for a long time and are
+sluggish. - So to get rid of the BFI, I just need to mimic the human eye, by exposing the sensor of my
+camera to light for longer.
+
+This is what shutter speed controls. But the problem is that I don't have control over it. This is why I told
+you in the beginning that I couldn't use my phone.
+
+My camera worked though. There I had full control over the shutter speed and took this picture with the white
+background:
+
+![Macro Keyboard](assets/hero.jpg)
+
+2. Layout picture: I screenshotted the top view of the keyboard in CAD (I use Autodesk Fusion)
+with different render settings.
+I put in the solid body view into photo shop with the visible edges and then overlayed another photo with a full
+wire frame view with the same perspective and adjusted the coverage (Deckkraft auf Deutsch).
+This results in a clear photo with faint internals of the macro keyboard.
+
+Then I marked the important periphere with text and exported this pic:
+
+![Macro Keyboard layout](assets/layout.jpg)
+
+3. For KiCanvas I needed to change the address to the path of my KiCad project root in order for KiCanvas to
+find the PCB and schematic.
+
+![Macro Keyboard layout](assets/2026-07-25-KiCanvas-badge.png)
+![Macro Keyboard layout](assets/2026-07-25-KiCanvas-view.png)
+
+4. Lastly I changed some formatting in the README.
+
+**tl;dr:** Took the hero picture of the macro keyboard, which made me discover the effect BFI has when
+photographing it with a high shutter speed - was able to solve it by using my separate camera; created the 
+layout photo by mashing together multiple view exports from my CAD; lastly fixed KiCanvas and did formatting.
+
+**Time spent this session: 4 hours**
+
+
+#### July 25: Adding licenses to the GitHub repo 
+
+The ship requirement of horizons was to pic out and add a license to the repo. So I added two licenses!
+
+This was actually pretty simple. I looked up common licenses for hardware projects and software projects
+on GitHub. Especially the projects that went into my direction. For example, there is this one guy, who
+built a [split keyboard](https://github.com/GEIGEIGEIST/TOTEM/tree/main?tab=readme-ov-file) based on the
+Seeed Studio XIAO nRF52840 BLE or XIAO RP2040.
+I actually discovered him a while ago (almost a year) when I first started with my project and was looking
+for other people that also had a problem. Ever since seeing his sleek split keyboard, he has been a great
+inspiration, even though he built a split keyboard instead of a macro keyboard.
+
+And he chose the "CERN Open Hardware Licence Version 2" - which I also liked. It basically says:
+
+> Anyone may study, modify, fabricate and sell your board. But if they distribute a modified design,
+> or distribute a product made from it, they must make the complete corresponding design sources 
+> available under CERN-OHL-S v2 too, keep your notices, and — where practicable — keep the source 
+> location visible on the product's case (§4). So a company can build and sell your keypad, but they
+> can't fork the PCB into a closed product.
+
+So I chose this license for the hardware. Not for the whole repo, because I already use open source
+firmware ZMK and I tailored and expanded it with modules, that could be very useful to other people.
+For example: The OLED module. And the problems I had are documented (e.g. artifacting, custom screen
+failing, anti aliased text that looked weird, assigning multiple bits to a 1bpp pixel or config I set
+up was flipped back to default by just changing to the custom screen instead of the built in one)
+Or an other example is the AS5600 driver that was adapted from Zephyr to work seamlessly with ZMK.
+This can be used by other people and I don't need to be that strict there.
+
+So for the Software part I chose the MIT license:
+> Maximally permissive. Anyone can use, modify, sell, or close-source my ZMK module, driver and config;
+> the only obligation is keeping my copyright line and the licence text with copies. I give no warranty
+> and take no liability. It does not require anyone to publish their changes back to me. 
+
+This is also the same license ZMK itself uses, so there's no friction there.
+
+Sound good.
+
+So I went onto https://ohwr.org/cern_ohl_s_v2.txt and opensource.org/license/mit and added them to
+the Repo and explained the dual license structure in the README.md shortly:
+
+> | Part | License | File |
+> |---|---|---|
+> | Firmware, ZMK config, scripts, docs (everything outside `hardware/`) | **MIT** | [LICENSE](./LICENSE) |
+> | Hardware design — KiCad schematic/PCB, Gerbers, CAD/case, BOMs (everything in `hardware/`) | **CERN-OHL-S v2** | [hardware/LICENSE](./hardware/LICENSE) |
+
+GitHub only detects a license at the repo root. It reads LICENSE there and nowhere else, so 
+whichever license sits at root becomes the badge on the repo page and the value in the API.
+The convention is: root = default, subdirectory = override. And in multi-license repos the root
+file is read as covering everything not otherwise stated, and a LICENSE deeper in the tree scopes
+that subtree. 
+So hardware/LICENSE overriding for hardware/ is the pattern people expect, and it puts the CERN text
+right next to the files it governs.
+
+The one weakness of the current split could be that a root LICENSE invites the readers that MIT covers
+hardware/ too, and someone who only reads the root file might not go looking for the override. 
+But the README table from the top is what resolves that (or should).
+(The usual fix is a short NOTICE file at root stating the split, rather than adding prose to LICENSE 
+itself — but keeping LICENSE as pure license text is what keeps GitHub's detector happy...)
+
+So this is why I landed on the structure.
+
+**tl;dr:** I needed to add a license to the repo, so I was going through many licenses, especially
+those assigned to similar projects. I added two licenses: CERN for hardware, MIT for firmware; 
+I made sure nothing collides with other open source projects I use (e.g. ZMK) and ´I don't break to many
+conventions with the license structure in the README (MIT as root and CERN as override for hardware
+subpath).
+
+**Time spent this session: 3 hours**

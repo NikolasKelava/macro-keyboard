@@ -198,8 +198,7 @@ Full instructions: **[hardware/BUILD.md](./hardware/BUILD.md)**. In short:
 1. **Order the PCB** — send the Gerbers ([production/](./hardware/PCB/KiCad/Macro-Keyboard-v4/production/)) 
 to JLCPCB (or any other pcb manufacturer of your liking) and have the LCSC-SMT parts from 
 [BOM_PCB.csv](./hardware/BOM_PCB.csv) assembled /or populated the board.
-2. **Source the rest of the parts** — [BOM.csv](./hardware/BOM.csv): switches, OLED, encoder magnet 
-+ bearing, battery, 3D print case.
+2. **Source the rest of the parts** — [BOM.csv](./hardware/BOM.csv): switches, OLED, encoder magnet + bearing, battery, 3D print case.
 3. **Hand-solder** the non-SMT parts onto the PCB, **print the case**, fit the encoder bearing first,
 then magnet into the knob.
 4. **Assemble all of the parts** - basically putting the enclosure parts, bearing, wheel for encoder
