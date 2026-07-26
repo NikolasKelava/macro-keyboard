@@ -1,7 +1,7 @@
 # Macro Keyboard
 
-A custom, wireless **Bluetooth LE macro keypad** — 12 mechanical keys, a magnetic rotary
-encoder, and a 128×64 OLED — built on a Nordic **nRF52840** module and running
+A custom, wireless **Bluetooth LE macro keypad** with 12 mechanical keys, a magnetic rotary
+encoder, and a 128×64 OLED built on a Nordic **nRF52840** module and running
 [**ZMK**](https://zmk.dev). Keys and profiles are configurable live over ZMK
 Studio; the encoder is a per-profile knob (volume / vertical scroll / horizontal
 scroll / browser tabs). Battery-powered (2000 mAh LiPo) with USB-C charging.
